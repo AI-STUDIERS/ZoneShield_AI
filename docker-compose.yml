@@ -1,0 +1,44 @@
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ZONESHIELD_AGENT_MODE=mock
+      - ZONESHIELD_DB_BACKEND=sqlite
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - worker
+
+  worker:
+    build:
+      context: ./vision
+      dockerfile: Dockerfile
+    environment:
+      - ZONESHIELD_OPENCV_VERSION=5
+    volumes:
+      - ./data:/app/data
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - ZONESHIELD_API_URL=http://api:8000
+
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,dynamodb,bedrock
+      - DEFAULT_REGION=us-east-1
+    volumes:
+      - "./data/localstack:/var/lib/localstack"
+    profiles:
+      - aws
