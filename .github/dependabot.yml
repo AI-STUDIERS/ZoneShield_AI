@@ -1,0 +1,21 @@
+# Dependabot version updates will be applied automatically.
+# You can also manually trigger updates via the "Dependabot" tab.
+
+version: 2
+
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviews:
+      - team-name: "zone-shield-maintainers"
+    assignees:
+      - zone-shield-bot
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore"
+      include: "scope"

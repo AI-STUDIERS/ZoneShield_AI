@@ -239,22 +239,22 @@ class Tracker:
                 track["age"] += 1
                 track["hits"] += 1
                 track["misses"] = 0
-                cp = class_probs_map.get(best_id, {})
+                cp = class_probs_map.get(best_id, det.get("class_probs", {}))
                 if cp:
                     track["class_probs"] = cp
-                    det_class = "foreign" if cp.get("foreign", 0) > cp.get("legit", 0) else "legit"
+                    det_class = det.get("class", "foreign" if cp.get("foreign", 0) > cp.get("legit", 0) else "legit")
                     track["class"] = det_class
-                    track["confidence"] = max(cp.get("foreign", 0), cp.get("legit", 0))
+                    track["confidence"] = det.get("confidence", max(cp.get("foreign", 0), cp.get("legit", 0)))
                 updated_ids.add(best_id)
             else:
                 tid = self._new_track(det_centroid)
                 self._tracks[tid]["age"] = 1  # new track is 1 frame old
-                cp = class_probs_map.get(tid, {})
+                cp = class_probs_map.get(tid, det.get("class_probs", {}))
                 if cp:
                     self._tracks[tid]["class_probs"] = cp
-                    det_class = "foreign" if cp.get("foreign", 0) > cp.get("legit", 0) else "legit"
+                    det_class = det.get("class", "foreign" if cp.get("foreign", 0) > cp.get("legit", 0) else "legit")
                     self._tracks[tid]["class"] = det_class
-                    self._tracks[tid]["confidence"] = max(cp.get("foreign", 0), cp.get("legit", 0))
+                    self._tracks[tid]["confidence"] = det.get("confidence", max(cp.get("foreign", 0), cp.get("legit", 0)))
                 updated_ids.add(tid)
 
         active_tracks = []

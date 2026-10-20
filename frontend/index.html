@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZoneShield AI | Active Threat Interception Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0e17;
+            --bg-panel: #111827;
+            --bg-card: #1f2937;
+            --border: #374151;
+            --primary: #3b82f6;
+            --accent: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --shield-zone: rgba(234, 179, 8, 0.25);
+            --shield-border: #eab308;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-badge {
+            background: linear-gradient(135deg, #2563eb, #10b981);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+
+        .brand h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .brand span {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-left: 8px;
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+        }
+
+        .badge-pill.active {
+            border-color: var(--accent);
+            color: #34d399;
+        }
+
+        .badge-pill.danger {
+            border-color: var(--danger);
+            color: #f87171;
+        }
+
+        .indicator-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+        }
+
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .viewport-panel {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .canvas-container {
+            position: relative;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #05070a;
+            min-height: 480px;
+        }
+
+        canvas {
+            border: 1px solid #1e293b;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+        }
+
+        .controls-bar {
+            padding: 12px 16px;
+            background-color: var(--bg-panel);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        button:hover {
+            background-color: #374151;
+            border-color: #4b5563;
+        }
+
+        button.primary {
+            background-color: #2563eb;
+            border-color: #3b82f6;
+        }
+
+        button.primary:hover {
+            background-color: #1d4ed8;
+        }
+
+        button.danger {
+            background-color: #dc2626;
+            border-color: #ef4444;
+        }
+
+        button.danger:hover {
+            background-color: #b91c1c;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .side-card {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 12px 16px;
+        }
+
+        .metric-item {
+            background-color: var(--bg-card);
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #60a5fa;
+            margin-top: 4px;
+        }
+
+        .feed-container {
+            padding: 8px 16px;
+            max-height: 220px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .feed-item {
+            background-color: var(--bg-card);
+            border-left: 3px solid var(--primary);
+            padding: 8px 10px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .feed-item.intercept {
+            border-left-color: var(--accent);
+        }
+
+        .feed-item.review {
+            border-left-color: var(--warning);
+        }
+
+        .review-panel {
+            padding: 12px 16px;
+        }
+
+        .review-card {
+            background-color: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+
+        .review-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .review-actions button {
+            flex: 1;
+            font-size: 0.75rem;
+            padding: 6px;
+            justify-content: center;
+        }
+
+        .disclaimer {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 8px 16px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <span class="brand-badge">AWS COOL + OpenCV 5</span>
+            <h1>ZoneShield AI</h1>
+            <span>Active Conveyor Threat Interception Digital Twin</span>
+        </div>
+        <div class="header-status">
+            <div id="coolBadge" class="badge-pill active">
+                <span class="indicator-dot"></span>
+                <span>COOL GRAVITON: ACTIVE</span>
+            </div>
+            <div id="killSwitchBadge" class="badge-pill">
+                <span class="indicator-dot"></span>
+                <span>SAFETY: NORMAL</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="viewport-panel">
+            <div class="panel-header">
+                <div>LIVE BELT CONVEYOR TELEMETRY</div>
+                <div style="font-family: 'JetBrains Mono'; font-size: 0.8rem; color: var(--text-muted);">
+                    SESSION: <span id="sessionTag">RUNNING</span>
+                </div>
+            </div>
+            <div class="canvas-container">
+                <canvas id="conveyorCanvas" width="640" height="480"></canvas>
+            </div>
+            <div class="controls-bar">
+                <div class="btn-group">
+                    <button id="btnStart" class="primary">▶ Start</button>
+                    <button id="btnPause">⏸ Pause</button>
+                    <button id="btnManualFire">💥 Manual Fire</button>
+                </div>
+                <div class="btn-group">
+                    <button id="btnKillSwitch" class="danger">🛑 KILL SWITCH</button>
+                </div>
+            </div>
+            <div class="disclaimer">
+                HARD CONSTRAINT C1 ENFORCED: Actuator is <strong>SIMULATED</strong> (Digital Twin). No physical air-jet or GPIO fired.
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <!-- Telemetry Card -->
+            <div class="side-card">
+                <div class="panel-header">PERFORMANCE & TIMING</div>
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-label">Pipeline Rate</div>
+                        <div class="metric-value" id="valFps">30.0 FPS</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Compute Budget</div>
+                        <div class="metric-value" id="valCompute">12.4 ms</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Active Tracks</div>
+                        <div class="metric-value" id="valTracks">0</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-label">Dropped Frames</div>
+                        <div class="metric-value" id="valDrops">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agentic Decision Inspector -->
+            <div class="side-card" style="flex: 1;">
+                <div class="panel-header">AGENTIC DECISION TRACE</div>
+                <div class="feed-container" id="decisionFeed">
+                    <div class="feed-item">Engine initialized. Monitoring belt stream...</div>
+                </div>
+            </div>
+
+            <!-- Human Review Queue Card -->
+            <div class="side-card">
+                <div class="panel-header">
+                    <span>HUMAN REVIEW QUEUE</span>
+                    <span id="reviewCountBadge" class="badge-pill" style="font-size: 0.75rem;">0 Pending</span>
+                </div>
+                <div class="review-panel" id="reviewContainer">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 10px;">
+                        No pending ambiguous decisions.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('conveyorCanvas');
+        const ctx = canvas.getContext('2d');
+        const feed = document.getElementById('decisionFeed');
+        const reviewContainer = document.getElementById('reviewContainer');
+
+        let ws = null;
+        let sessionId = "00000000-0000-0000-0000-000000000001";
+        let puffAnimation = null;
+
+        // Conveyor belt visual settings
+        const shieldZone = [[200, 150], [400, 150], [400, 250], [200, 250]];
+        const interceptorLine = { x1: 260, y1: 250, x2: 340, y2: 250 };
+
+        function initWebSocket() {
+            const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.host || 'localhost:8000';
+            ws = new WebSocket(`${proto}//${host}/ws/sessions/${sessionId}/stream`);
+
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+                if (msg.type === 'frame') {
+                    renderFrame(msg.payload);
+                } else if (msg.type === 'actuator') {
+                    triggerPuff(msg.payload.target);
+                    addFeedItem(`[ACTUATOR] Air-Jet SIMULATED impulse fired at track #${msg.payload.track_id}`, 'intercept');
+                } else if (msg.type === 'review_item') {
+                    addReviewCard(msg.payload);
+                    addFeedItem(`[TIER 2] Ambiguous threat escalated to human review queue`, 'review');
+                }
+            };
+
+            ws.onclose = () => {
+                setTimeout(initWebSocket, 2000);
+            };
+        }
+
+        function renderFrame(payload) {
+            // Update metrics
+            if (payload.metrics) {
+                document.getElementById('valFps').innerText = `${payload.metrics.fps} FPS`;
+                document.getElementById('valCompute').innerText = `${payload.metrics.compute_ms} ms`;
+                document.getElementById('valTracks').innerText = payload.metrics.active_tracks_count;
+                document.getElementById('valDrops').innerText = payload.metrics.dropped_frames;
+            }
+
+            // Draw background belt
+            ctx.fillStyle = "#1e2430";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw scrolling texture stripes
+            const offset = (Date.now() / 20) % 40;
+            ctx.strokeStyle = "#273142";
+            ctx.lineWidth = 4;
+            for (let y = -40 + offset; y < canvas.height; y += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw Shield Zone Polygon
+            ctx.fillStyle = "rgba(234, 179, 8, 0.15)";
+            ctx.strokeStyle = "#eab308";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath();
+            ctx.moveTo(shieldZone[0][0], shieldZone[0][1]);
+            for (let i = 1; i < shieldZone.length; i++) {
+                ctx.lineTo(shieldZone[i][0], shieldZone[i][1]);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = "#eab308";
+            ctx.font = "bold 11px 'JetBrains Mono'";
+            ctx.fillText("PROTECTED SHIELD ZONE", 210, 142);
+
+            // Draw Interceptor Line
+            ctx.strokeStyle = "#ef4444";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(interceptorLine.x1, interceptorLine.y1);
+            ctx.lineTo(interceptorLine.x2, interceptorLine.y2);
+            ctx.stroke();
+
+            ctx.fillStyle = "#ef4444";
+            ctx.fillText("AIR-JET INTERCEPTOR LINE", 230, 268);
+
+            // Draw Tracked Objects & Trajectories
+            if (payload.tracks) {
+                payload.tracks.forEach(track => {
+                    const cx = track.centroid[0];
+                    const cy = track.centroid[1];
+                    const isForeign = track.class === 'foreign';
+                    const color = isForeign ? "#ef4444" : "#10b981";
+
+                    // Object body
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // Track Label
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "10px 'JetBrains Mono'";
+                    ctx.fillText(`ID:${track.id} (${(track.confidence * 100).toFixed(0)}%)`, cx - 22, cy - 24);
+
+                    // Velocity vector / Trajectory
+                    if (track.velocity) {
+                        ctx.strokeStyle = "#38bdf8";
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(cx, cy);
+                        ctx.lineTo(cx + track.velocity[0] * 0.5, cy + track.velocity[1] * 0.5);
+                        ctx.stroke();
+                    }
+                });
+            }
+
+            // Draw Puff Animation if active
+            if (puffAnimation && Date.now() - puffAnimation.start < 300) {
+                const progress = (Date.now() - puffAnimation.start) / 300;
+                ctx.fillStyle = `rgba(59, 130, 246, ${1 - progress})`;
+                ctx.beginPath();
+                ctx.arc(puffAnimation.x, puffAnimation.y, 20 + progress * 40, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Log decisions
+            if (payload.decisions && payload.decisions.length > 0) {
+                payload.decisions.forEach(d => {
+                    if (d.action !== "monitor") {
+                        addFeedItem(`[DECISION] Track #${d.track_id} -> ${d.action.toUpperCase()} (tier ${d.tier}): ${d.reason}`, d.action);
+                    }
+                });
+            }
+        }
+
+        function triggerPuff(target) {
+            puffAnimation = { x: target[0], y: target[1], start: Date.now() };
+        }
+
+        function addFeedItem(text, type = '') {
+            const div = document.createElement('div');
+            div.className = `feed-item ${type}`;
+            div.innerText = `${new Date().toLocaleTimeString()} ${text}`;
+            feed.prepend(div);
+            if (feed.children.length > 25) {
+                feed.removeChild(feed.lastChild);
+            }
+        }
+
+        function addReviewCard(item) {
+            reviewContainer.innerHTML = '';
+            const card = document.createElement('div');
+            card.className = 'review-card';
+            card.innerHTML = `
+                <div style="font-weight: 700; color: #fbbf24; font-size: 0.85rem;">THREAT REVIEW #${item.id.slice(0, 8)}</div>
+                <div style="font-size: 0.8rem; margin: 4px 0;">${item.recommendation}</div>
+                <div class="review-actions">
+                    <button class="primary" onclick="resolveReview('${item.id}', 'approved')">Approve Intercept</button>
+                    <button onclick="resolveReview('${item.id}', 'dismissed')">Dismiss</button>
+                </div>
+            `;
+            reviewContainer.appendChild(card);
+            document.getElementById('reviewCountBadge').innerText = "1 Pending";
+        }
+
+        async function resolveReview(id, status) {
+            await fetch(`/api/v1/review/${id}/resolve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: status })
+            });
+            reviewContainer.innerHTML = '<div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 10px;">Resolved. No pending items.</div>';
+            document.getElementById('reviewCountBadge').innerText = "0 Pending";
+        }
+
+        // Button Listeners
+        document.getElementById('btnStart').onclick = () => fetch(`/api/v1/sessions/${sessionId}/start`, { method: 'POST' });
+        document.getElementById('btnPause').onclick = () => fetch(`/api/v1/sessions/${sessionId}/pause`, { method: 'POST' });
+        document.getElementById('btnManualFire').onclick = () => fetch('/api/v1/actuator/manual-fire', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId, target_x: 300, target_y: 250, force: true })
+        });
+
+        let killSwitchActive = false;
+        const killBtn = document.getElementById('btnKillSwitch');
+        killBtn.onclick = async () => {
+            killSwitchActive = !killSwitchActive;
+            if (killSwitchActive) {
+                await fetch('/api/v1/system/kill-switch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: "Emergency manual stop" })
+                });
+                killBtn.innerText = "RESET KILL SWITCH";
+                document.getElementById('killSwitchBadge').className = "badge-pill danger";
+                document.getElementById('killSwitchBadge').innerHTML = '<span class="indicator-dot"></span><span>SAFETY: KILLED</span>';
+            } else {
+                await fetch('/api/v1/system/kill-switch/reset', { method: 'POST' });
+                killBtn.innerText = "🛑 KILL SWITCH";
+                document.getElementById('killSwitchBadge').className = "badge-pill";
+                document.getElementById('killSwitchBadge').innerHTML = '<span class="indicator-dot"></span><span>SAFETY: NORMAL</span>';
+            }
+        };
+
+        window.onload = initWebSocket;
+    </script>
+</body>
+</html>
