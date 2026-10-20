@@ -1,0 +1,56 @@
+# ZoneShield AI configuration
+# All values overridable via environment variables prefixed with ZONESHIELD_
+
+app:
+  name: zoneshield-ai
+  version: "0.1.0"
+  env: dev
+
+simulator:
+  belt_width_px: 640
+  belt_height_px: 480
+  belt_speed_px_s: 120.0
+  fps_target: 30
+  shield_zone_polygon_mm: [[100, 100], [300, 100], [300, 200], [100, 200]]
+  interceptor_line_mm: 250
+  actuation_delay_ms: 80
+  min_tti_margin_ms: 150
+  jet_cone_angle_deg: 25
+  jet_range_mm: 120
+  t_intercept: 0.75
+  t_ambiguous_low: 0.40
+
+vision:
+  opencv_major_required: 5
+  num_threads: 4
+  roi_downscale: 2.0
+  bg_history: 50
+  bg_var_threshold: 16.0
+  detect_shadows: false
+  min_contour_area_px: 100
+  morph_kernel_px: 5
+
+decision:
+  agent_max_steps: 4
+  agent_timeout_ms: 2000
+  agent_retries: 1
+  circuit_breaker_failures: 3
+  circuit_breaker_half_open_s: 30
+
+storage:
+  db_path: data/zoneshield.db
+  evidence_path: data/evidence
+  backend: sqlite
+
+agent:
+  mode: mock
+  bedrock_model_id: null
+  region: us-east-1
+
+cost:
+  idle_stop_minutes: 30
+  max_daily_usd: 10.0
+
+logging:
+  level: INFO
+  format: json
