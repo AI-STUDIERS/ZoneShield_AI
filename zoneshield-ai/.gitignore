@@ -48,6 +48,7 @@ credentials.json
 # Runtime data & SQLite
 data/
 !data/.gitkeep
+!data/cool_proof.json
 *.db
 *.db-shm
 *.db-wal
@@ -103,9 +104,6 @@ Thumbs.db
 crash.log
 
 # Generated artifacts / reports / benchmark output
-reports/
-results/
-cool_proof.json
 dataset/
 runs/
 *.pt

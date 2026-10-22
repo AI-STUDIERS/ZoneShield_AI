@@ -1,0 +1,102 @@
+{
+  "run_id": "bench_1792660464",
+  "config": "B3",
+  "timestamp": "2026-10-22T09:14:24.678584+00:00",
+  "environment": {
+    "timestamp": "2026-10-22T09:14:24.190919+00:00",
+    "product": "ZoneShield AI",
+    "component": "OpenCV 5 & COOL Runtime Selfcheck",
+    "opencv": {
+      "version": "5.0.0",
+      "major": 5,
+      "is_opencv_5": true,
+      "status": "PASS",
+      "message": "OpenCV 5 verified"
+    },
+    "hardware": {
+      "architecture": "aarch64",
+      "is_arm64": true,
+      "system": "Linux",
+      "processor": "aarch64",
+      "python_version": "3.11.16",
+      "target_instance_family": "c7g (AWS Graviton3 / Graviton4)"
+    },
+    "cool": {
+      "cool_active": true,
+      "has_neon": true,
+      "has_kleidicv": true,
+      "has_openmp": false,
+      "has_tbb": false,
+      "num_threads": 2,
+      "quick_threshold_ms": 2.71,
+      "status": "COOL_ACTIVE",
+      "acceleration_engine": "COOL / Arm NEON / KleidiCV on Graviton"
+    },
+    "status": "PASS"
+  },
+  "microbenchmarks": {
+    "resize_downscale": {
+      "mean_ms": 0.067,
+      "std_ms": 0.013,
+      "p50_ms": 0.062,
+      "p95_ms": 0.076,
+      "p99_ms": 0.114,
+      "throughput_ops_sec": 15017.3
+    },
+    "gaussian_blur": {
+      "mean_ms": 0.917,
+      "std_ms": 0.246,
+      "p50_ms": 1.081,
+      "p95_ms": 1.102,
+      "p99_ms": 1.15,
+      "throughput_ops_sec": 1090.5
+    },
+    "adaptive_threshold": {
+      "mean_ms": 1.251,
+      "std_ms": 0.013,
+      "p50_ms": 1.247,
+      "p95_ms": 1.275,
+      "p99_ms": 1.278,
+      "throughput_ops_sec": 799.4
+    },
+    "morphology_open": {
+      "mean_ms": 0.421,
+      "std_ms": 0.009,
+      "p50_ms": 0.418,
+      "p95_ms": 0.435,
+      "p99_ms": 0.453,
+      "throughput_ops_sec": 2373.4
+    },
+    "morphology_close": {
+      "mean_ms": 0.418,
+      "std_ms": 0.003,
+      "p50_ms": 0.417,
+      "p95_ms": 0.426,
+      "p99_ms": 0.428,
+      "throughput_ops_sec": 2389.5
+    },
+    "find_contours": {
+      "mean_ms": 3.659,
+      "std_ms": 0.02,
+      "p50_ms": 3.66,
+      "p95_ms": 3.69,
+      "p99_ms": 3.691,
+      "throughput_ops_sec": 273.3
+    }
+  },
+  "pipeline_benchmark": {
+    "mean_ms": 2.97,
+    "std_ms": 0.13,
+    "p50_ms": 2.94,
+    "p95_ms": 3.26,
+    "p99_ms": 3.28,
+    "throughput_fps": 337.3,
+    "stage_mean_ms": {
+      "UndistortHomography": 0.0,
+      "ROIDownscale": 0.11,
+      "BackgroundSubtract": 2.5,
+      "Morphology": 0.27,
+      "Contours": 0.06
+    }
+  }
+}
