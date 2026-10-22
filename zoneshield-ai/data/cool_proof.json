@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-10-22T09:12:54.338271+00:00",
+  "product": "ZoneShield AI",
+  "component": "OpenCV 5 & COOL Runtime Selfcheck",
+  "opencv": {
+    "version": "5.0.0",
+    "major": 5,
+    "is_opencv_5": true,
+    "status": "PASS",
+    "message": "OpenCV 5 verified"
+  },
+  "hardware": {
+    "architecture": "aarch64",
+    "is_arm64": true,
+    "system": "Linux",
+    "processor": "aarch64",
+    "python_version": "3.11.16",
+    "target_instance_family": "c7g (AWS Graviton3 / Graviton4)"
+  },
+  "cool": {
+    "cool_active": true,
+    "has_neon": true,
+    "has_kleidicv": true,
+    "has_openmp": false,
+    "has_tbb": false,
+    "num_threads": 2,
+    "quick_threshold_ms": 2.886,
+    "status": "COOL_ACTIVE",
+    "acceleration_engine": "COOL / Arm NEON / KleidiCV on Graviton"
+  },
+  "status": "PASS"
+}

@@ -5,10 +5,10 @@
   "fps": 30,
   "recording_file": "C:/Users/Alence/.gemini/antigravity-ide/brain/b03b8279-dbb1-4cbc-b706-8641967946d6/zoneshield_demo_1792514950259.webp",
   "stills": {
-    "dashboard_initial": "C:/Users/Alence/.gemini/antigravity-ide/brain/b03b8279-dbb1-4cbc-b706-8641967946d6/dashboard_initial_1792514973879.png",
-    "manual_fire_state": "C:/Users/Alence/.gemini/antigravity-ide/brain/b03b8279-dbb1-4cbc-b706-8641967946d6/manual_fire_state_1792514994825.png",
-    "kill_switch_active": "C:/Users/Alence/.gemini/antigravity-ide/brain/b03b8279-dbb1-4cbc-b706-8641967946d6/kill_switch_active_1792515007918.png",
-    "final_stable_state": "C:/Users/Alence/.gemini/antigravity-ide/brain/b03b8279-dbb1-4cbc-b706-8641967946d6/final_stable_state_1792515059375.png"
+    "dashboard_initial": "docs/images/dashboard_telemetry_hud.png",
+    "manual_fire_state": "docs/images/manual_actuator_burst.png",
+    "kill_switch_active": "docs/images/kill_switch_guardrail_active.png",
+    "final_stable_state": "docs/images/stream_tracking_trajectories.png"
   },
   "scenes": [
     {
@@ -17,7 +17,7 @@
       "slug": "dashboard-telemetry",
       "status": "PASS",
       "duration_s": 14.0,
-      "still": "dashboard_initial_1792514973879.png"
+      "still": "dashboard_telemetry_hud.png"
     },
     {
       "index": 2,
@@ -25,7 +25,7 @@
       "slug": "manual-actuator-burst",
       "status": "PASS",
       "duration_s": 12.0,
-      "still": "manual_fire_state_1792514994825.png"
+      "still": "manual_actuator_burst.png"
     },
     {
       "index": 3,
@@ -33,7 +33,7 @@
       "slug": "kill-switch-safety",
       "status": "PASS",
       "duration_s": 16.0,
-      "still": "kill_switch_active_1792515007918.png"
+      "still": "kill_switch_guardrail_active.png"
     },
     {
       "index": 4,
@@ -41,7 +41,7 @@
       "slug": "stream-playback",
       "status": "PASS",
       "duration_s": 18.0,
-      "still": "final_stable_state_1792515059375.png"
+      "still": "stream_tracking_trajectories.png"
     }
   ],
   "total_scenes": 4,

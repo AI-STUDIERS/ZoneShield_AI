@@ -7,9 +7,14 @@
 [![AWS Graviton](https://img.shields.io/badge/AWS-Graviton3%20%2B%20COOL-orange.svg)](https://aws.amazon.com/ec2/graviton/)
 [![Agentic Vision](https://img.shields.io/badge/Architecture-Agentic%20Vision-emerald.svg)](#agentic-vision)
 [![Safety Guardrails](https://img.shields.io/badge/Safety-G1--G5%20Guardrails-red.svg)](#safety-guardrails)
-[![Tests](https://img.shields.io/badge/Tests-79%20passed-brightgreen.svg)](#)
+[![Tests](https://img.shields.io/badge/Tests-81%20passed-brightgreen.svg)](#)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![GitHub](https://img.shields.io/badge/GitHub-misterA--2406%2FZoneShield__AI-black.svg)](https://github.com/misterA-2406/ZoneShield_AI)
+[![Documentation](https://img.shields.io/badge/Docs-Technical%20Specification-purple.svg)](docs/TECHNICAL_DOCUMENTATION.md)
+
+---
+
+> 📖 **Comprehensive Publication-Grade Documentation**: For the exhaustive 9-section architectural specification, mathematical formulations ($\LaTeX$), benchmark proofs, and cloud topology, refer to [**`docs/TECHNICAL_DOCUMENTATION.md`**](docs/TECHNICAL_DOCUMENTATION.md).
 
 ---
 

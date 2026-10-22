@@ -95,8 +95,8 @@
 
 | Type | Path |
 | :--- | :--- |
-| **Video Recording** | `C:\Users\Alence\.gemini\antigravity-ide\brain\b03b8279-dbb1-4cbc-b706-8641967946d6\zoneshield_demo_1792514950259.webp` |
-| **Still 1 (Dashboard)** | `C:\Users\Alence\.gemini\antigravity-ide\brain\b03b8279-dbb1-4cbc-b706-8641967946d6\dashboard_initial_1792514973879.png` |
-| **Still 2 (Manual Burst)** | `C:\Users\Alence\.gemini\antigravity-ide\brain\b03b8279-dbb1-4cbc-b706-8641967946d6\manual_fire_state_1792514994825.png` |
-| **Still 3 (Kill Switch)** | `C:\Users\Alence\.gemini\antigravity-ide\brain\b03b8279-dbb1-4cbc-b706-8641967946d6\kill_switch_active_1792515007918.png` |
-| **Still 4 (Final State)** | `C:\Users\Alence\.gemini\antigravity-ide\brain\b03b8279-dbb1-4cbc-b706-8641967946d6\final_stable_state_1792515059375.png` |
+| **Video Recording** | `docs/demo_pack/zoneshield_demo.webp` (or artifact video) |
+| **Still 1 (Dashboard)** | `docs/images/dashboard_telemetry_hud.png` |
+| **Still 2 (Manual Burst)** | `docs/images/manual_actuator_burst.png` |
+| **Still 3 (Kill Switch)** | `docs/images/kill_switch_guardrail_active.png` |
+| **Still 4 (Final State)** | `docs/images/stream_tracking_trajectories.png` |

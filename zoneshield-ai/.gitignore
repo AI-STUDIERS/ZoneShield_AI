@@ -46,9 +46,11 @@ credentials.json
 .aws/
 
 # Runtime data & SQLite
-data/
+data/*
 !data/.gitkeep
 !data/cool_proof.json
+!data/classifier.onnx
+!data/classifier.onnx.data
 *.db
 *.db-shm
 *.db-wal
@@ -108,6 +110,7 @@ dataset/
 runs/
 *.pt
 *.mp4
+!docs/test_videos/*.mp4
 
 # Local / personal workspace skills and guidelines
 .agents/
