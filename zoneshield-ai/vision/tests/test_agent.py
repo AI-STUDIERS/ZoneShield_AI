@@ -135,3 +135,43 @@ def test_bedrock_agent_not_configured():
     tool = agent.decide(context, time_budget_ms=500.0, trace=trace)
     assert tool.name == "fallback"
     assert trace.fallback_used is True
+
+
+def test_bedrock_agent_invoker_success():
+    def mock_invoker(model_id: str, ctx: dict) -> dict:
+        return {
+            "action": "request_more_frames",
+            "args": {"n_frames": 5},
+            "reason": "Occlusion detected; requesting 5 additional frames",
+            "confidence_delta": 0.15,
+        }
+
+    agent = BedrockAgentClient(model_id="anthropic.claude-3-haiku-20240307-v1:0", invoker=mock_invoker)
+    trace = AgentTrace(decision_id="dec_bedrock_01")
+    context = {
+        "track": {"id": 10, "confidence": 0.60},
+        "prediction": {"tti_ms": 800.0, "crosses_zone": True},
+        "thresholds": {"t_intercept": 0.75, "t_ambiguous_low": 0.40},
+        "evidence_round": 1,
+    }
+    tool = agent.decide(context, time_budget_ms=600.0, trace=trace)
+    assert tool.name == "request_more_frames"
+    assert tool.confidence_delta == 0.15
+    assert trace.fallback_used is False
+    assert trace.step_count() == 1
+    assert "Occlusion detected" in tool.result_summary
+
+
+def test_bedrock_agent_confidence_below_floor_falls_back():
+    agent = BedrockAgentClient(model_id="anthropic.claude-3-haiku-20240307-v1:0")
+    trace = AgentTrace(decision_id="dec_bedrock_02")
+    context = {
+        "track": {"id": 11, "confidence": 0.25},
+        "prediction": {"tti_ms": 800.0, "crosses_zone": True},
+        "thresholds": {"t_intercept": 0.75, "t_ambiguous_low": 0.40},
+        "evidence_round": 0,
+    }
+    tool = agent.decide(context, time_budget_ms=600.0, trace=trace)
+    assert tool.name == "fallback"
+    assert trace.fallback_used is True
+    assert "below ambiguous floor" in tool.result_summary

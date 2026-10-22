@@ -1,0 +1,67 @@
+project: "ZoneShield AI"
+session_name: "zoneshield_demo"
+aspect: "16:9"
+fps: 30
+url: "http://localhost:8000/"
+
+scenes:
+  - index: 1
+    name: "Dashboard Telemetry & Protected Shield Zone"
+    slug: "dashboard-telemetry"
+    duration_s: 14.0
+    setup_steps:
+      - cmd: "open http://localhost:8000/ --session-name zoneshield_demo"
+      - cmd: "wait --load networkidle --session-name zoneshield_demo"
+    record_steps:
+      - cmd: "observe canvas, active tracks, fps: 30.0, compute: 12.4ms"
+        narration: "ZoneShield AI operates an active conveyor threat interception digital twin powered by OpenCV 5 and AWS Graviton with KleidiCV COOL acceleration."
+    checks:
+      snapshot_contains:
+        - "COOL GRAVITON: ACTIVE"
+        - "PROTECTED SHIELD ZONE"
+        - "AIR-JET INTERCEPTOR LINE"
+
+  - index: 2
+    name: "Simulated Actuator Manual Burst (C1 Guardrail)"
+    slug: "manual-actuator-burst"
+    duration_s: 12.0
+    setup_steps:
+      - cmd: "find button '💥 Manual Fire'"
+    record_steps:
+      - cmd: "click '#btnManualFire'"
+      - cmd: "observe air-jet puff animation and decision feed update"
+        narration: "Demonstrating the simulated pneumatic air-jet actuator. Enforcing Hard Constraint C1: strictly a digital twin with zero physical GPIO hazards."
+    checks:
+      snapshot_contains:
+        - "Air-Jet SIMULATED impulse fired"
+
+  - index: 3
+    name: "Emergency Safety Kill Switch (G5 Guardrail)"
+    slug: "kill-switch-safety"
+    duration_s: 16.0
+    setup_steps:
+      - cmd: "find button '🛑 KILL SWITCH'"
+    record_steps:
+      - cmd: "click '#btnKillSwitch'"
+      - cmd: "observe badge transition to 'SAFETY: KILLED'"
+      - cmd: "click reset kill switch back to 'SAFETY: NORMAL'"
+        narration: "Safety Guardrail G5: instantaneous emergency stop. Tripping the kill switch immediately halts all actuation loops and registers an immutable audit trace."
+    checks:
+      snapshot_contains:
+        - "SAFETY: KILLED"
+        - "SAFETY: NORMAL"
+
+  - index: 4
+    name: "Stream Playback & Multi-Object Tracking"
+    slug: "stream-playback"
+    duration_s: 18.0
+    setup_steps:
+      - cmd: "find button '⏸ Pause'"
+    record_steps:
+      - cmd: "click '#btnPause'"
+      - cmd: "click '#btnStart'"
+      - cmd: "observe continuous conveyor motion and Kalman filter track IDs"
+        narration: "The bounded ring buffer guarantees zero memory growth at 30 FPS while maintaining full temporal history for two-tier agentic escalations."
+    checks:
+      snapshot_contains:
+        - "RUNNING"

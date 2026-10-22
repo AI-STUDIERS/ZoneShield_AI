@@ -144,39 +144,108 @@ class Contours(Stage):
 
 
 class Classify(Stage):
-    """Classify detections as foreign/legit/ambiguous using color heuristics."""
+    """Classify detections as foreign/legit/ambiguous using OpenCV 5 DNN or classical fallback."""
+
+    def __init__(self, model_path: Optional[str] = "data/classifier.onnx") -> None:
+        self._model_path = model_path
+        self._net: Optional[cv2.dnn.Net] = None
+        self._dnn_initialized = False
+
+    def _init_dnn(self) -> None:
+        if self._dnn_initialized:
+            return
+        self._dnn_initialized = True
+        if self._model_path:
+            import os
+            if os.path.isfile(self._model_path):
+                try:
+                    self._net = cv2.dnn.readNetFromONNX(str(self._model_path))
+                except Exception:
+                    self._net = None
 
     def _process(self, ctx: PipelineContext) -> PipelineContext:
+        self._init_dnn()
+        frame = ctx.frame if ctx.frame is not None else ctx.roi_frame
+
         for det in ctx.detections:
-            x, y, w, h = det["bbox"]
+            x, y, w, h = [int(v) for v in det["bbox"]]
             cx, cy = int(det["centroid"][0]), int(det["centroid"][1])
-            frame = ctx.frame if ctx.frame is not None else ctx.roi_frame
+
             if frame is None:
                 det["class_probs"] = {"legit": 0.33, "foreign": 0.33, "ambiguous": 0.34}
                 det["class"] = "ambiguous"
                 det["confidence"] = 0.0
                 continue
-            if 0 <= cy < frame.shape[0] and 0 <= cx < frame.shape[1]:
-                b, g, r = int(frame[cy, cx, 0]), int(frame[cy, cx, 1]), int(frame[cy, cx, 2])
-            else:
-                b, g, r = 128, 128, 128
-            foreign_score = max(0, g - max(r, b)) / 255.0
-            legit_score = max(0, b - max(r, g)) / 255.0
-            total = foreign_score + legit_score
-            if total < 0.1:
-                det["class_probs"] = {"legit": 0.33, "foreign": 0.33, "ambiguous": 0.34}
-                det["class"] = "ambiguous"
-                det["confidence"] = 0.34
-            else:
-                f_norm = foreign_score / total
-                l_norm = legit_score / total
-                det["class_probs"] = {"foreign": f_norm, "legit": l_norm, "ambiguous": 1.0 - f_norm - l_norm}
-                if f_norm > l_norm:
-                    det["class"] = "foreign"
-                    det["confidence"] = f_norm
+
+            classified_by_dnn = False
+            if self._net is not None and w >= 8 and h >= 8:
+                x1 = max(0, x)
+                y1 = max(0, y)
+                x2 = min(frame.shape[1], x + w)
+                y2 = min(frame.shape[0], y + h)
+                crop = frame[y1:y2, x1:x2]
+
+                if crop.size > 0 and crop.shape[0] >= 4 and crop.shape[1] >= 4:
+                    try:
+                        blob = cv2.dnn.blobFromImage(
+                            crop,
+                            scalefactor=1.0 / 255.0,
+                            size=(32, 32),
+                            mean=(0, 0, 0),
+                            swapRB=False,
+                            crop=False,
+                        )
+                        self._net.setInput(blob)
+                        out = self._net.forward()
+                        probs = out[0]
+                        f_prob = float(probs[0])
+                        l_prob = float(probs[1])
+                        a_prob = float(probs[2])
+                        total = f_prob + l_prob + a_prob
+                        if total > 0:
+                            f_norm = f_prob / total
+                            l_norm = l_prob / total
+                            a_norm = a_prob / total
+                            det["class_probs"] = {"foreign": f_norm, "legit": l_norm, "ambiguous": a_norm}
+                            if f_norm >= l_norm and f_norm >= a_norm:
+                                det["class"] = "foreign"
+                                det["confidence"] = f_norm
+                            elif l_norm >= f_norm and l_norm >= a_norm:
+                                det["class"] = "legit"
+                                det["confidence"] = l_norm
+                            else:
+                                det["class"] = "ambiguous"
+                                det["confidence"] = a_norm
+                            det["dnn_accelerated"] = True
+                            classified_by_dnn = True
+                    except Exception:
+                        classified_by_dnn = False
+
+            if not classified_by_dnn:
+                if 0 <= cy < frame.shape[0] and 0 <= cx < frame.shape[1]:
+                    b, g, r = int(frame[cy, cx, 0]), int(frame[cy, cx, 1]), int(frame[cy, cx, 2])
                 else:
-                    det["class"] = "legit"
-                    det["confidence"] = l_norm
+                    b, g, r = 128, 128, 128
+
+                foreign_score = max(0, g - max(r, b)) / 255.0
+                legit_score = max(0, b - max(r, g)) / 255.0
+                total = foreign_score + legit_score
+                if total < 0.1:
+                    det["class_probs"] = {"legit": 0.33, "foreign": 0.33, "ambiguous": 0.34}
+                    det["class"] = "ambiguous"
+                    det["confidence"] = 0.34
+                else:
+                    f_norm = foreign_score / total
+                    l_norm = legit_score / total
+                    det["class_probs"] = {"foreign": f_norm, "legit": l_norm, "ambiguous": 1.0 - f_norm - l_norm}
+                    if f_norm > l_norm:
+                        det["class"] = "foreign"
+                        det["confidence"] = f_norm
+                    else:
+                        det["class"] = "legit"
+                        det["confidence"] = l_norm
+                det["dnn_accelerated"] = False
+
         return ctx
 
 
@@ -216,46 +285,85 @@ class Tracker:
         class_probs_map = class_probs_map or {}
         updated_ids = set()
 
-        for det in detections:
-            det_centroid = np.array(det["centroid"], dtype=float).reshape(2, 1)
-            best_id = None
-            best_dist = float("inf")
-            for tid, track in self._tracks.items():
-                if tid in updated_ids:
-                    continue
-                dist = float(np.linalg.norm(det_centroid - track["state"][0:2]))
-                if dist < best_dist and dist < 50.0:
-                    best_dist = dist
-                    best_id = tid
+        track_ids = list(self._tracks.keys())
+        n_tracks = len(track_ids)
+        n_dets = len(detections)
 
-            if best_id is not None:
-                track = self._tracks[best_id]
-                state_pred, cov_pred = self._kalman_predict(track["state"], track["cov"])
-                state_upd, cov_upd = self._kalman_update(state_pred, cov_pred, det_centroid)
-                track["state"] = state_upd
-                track["cov"] = cov_upd
-                track["centroid"] = state_upd[0:2].flatten()
-                track["velocity"] = state_upd[2:4].flatten()
-                track["age"] += 1
-                track["hits"] += 1
-                track["misses"] = 0
-                cp = class_probs_map.get(best_id, det.get("class_probs", {}))
-                if cp:
-                    track["class_probs"] = cp
-                    det_class = det.get("class", "foreign" if cp.get("foreign", 0) > cp.get("legit", 0) else "legit")
-                    track["class"] = det_class
-                    track["confidence"] = det.get("confidence", max(cp.get("foreign", 0), cp.get("legit", 0)))
-                updated_ids.add(best_id)
-            else:
-                tid = self._new_track(det_centroid)
-                self._tracks[tid]["age"] = 1  # new track is 1 frame old
-                cp = class_probs_map.get(tid, det.get("class_probs", {}))
-                if cp:
-                    self._tracks[tid]["class_probs"] = cp
-                    det_class = det.get("class", "foreign" if cp.get("foreign", 0) > cp.get("legit", 0) else "legit")
-                    self._tracks[tid]["class"] = det_class
-                    self._tracks[tid]["confidence"] = det.get("confidence", max(cp.get("foreign", 0), cp.get("legit", 0)))
-                updated_ids.add(tid)
+        matches: list[tuple[int, int]] = []
+        unmatched_dets = list(range(n_dets))
+
+        # Hungarian algorithm matching if scipy is available and both tracks and detections exist
+        used_hungarian = False
+        if n_tracks > 0 and n_dets > 0:
+            try:
+                from scipy.optimize import linear_sum_assignment
+                cost_matrix = np.zeros((n_dets, n_tracks), dtype=float)
+                for d_idx, det in enumerate(detections):
+                    d_c = np.array(det["centroid"], dtype=float)
+                    for t_idx, tid in enumerate(track_ids):
+                        t_c = self._tracks[tid]["state"][0:2].flatten()
+                        cost_matrix[d_idx, t_idx] = float(np.linalg.norm(d_c - t_c))
+
+                row_ind, col_ind = linear_sum_assignment(cost_matrix)
+                for r, c in zip(row_ind, col_ind):
+                    if cost_matrix[r, c] < 50.0:
+                        matches.append((r, track_ids[c]))
+                        if r in unmatched_dets:
+                            unmatched_dets.remove(r)
+                used_hungarian = True
+            except Exception:
+                used_hungarian = False
+
+        if not used_hungarian:
+            for d_idx, det in enumerate(detections):
+                det_centroid = np.array(det["centroid"], dtype=float).reshape(2, 1)
+                best_id = None
+                best_dist = float("inf")
+                for tid, track in self._tracks.items():
+                    if tid in updated_ids:
+                        continue
+                    dist = float(np.linalg.norm(det_centroid - track["state"][0:2]))
+                    if dist < best_dist and dist < 50.0:
+                        best_dist = dist
+                        best_id = tid
+                if best_id is not None:
+                    matches.append((d_idx, best_id))
+                    if d_idx in unmatched_dets:
+                        unmatched_dets.remove(d_idx)
+
+        for d_idx, tid in matches:
+            det = detections[d_idx]
+            det_centroid = np.array(det["centroid"], dtype=float).reshape(2, 1)
+            track = self._tracks[tid]
+            state_pred, cov_pred = self._kalman_predict(track["state"], track["cov"])
+            state_upd, cov_upd = self._kalman_update(state_pred, cov_pred, det_centroid)
+            track["state"] = state_upd
+            track["cov"] = cov_upd
+            track["centroid"] = state_upd[0:2].flatten()
+            track["velocity"] = state_upd[2:4].flatten()
+            track["age"] += 1
+            track["hits"] += 1
+            track["misses"] = 0
+            cp = class_probs_map.get(tid, det.get("class_probs", {}))
+            if cp:
+                track["class_probs"] = cp
+                det_class = det.get("class", "foreign" if cp.get("foreign", 0) > cp.get("legit", 0) else "legit")
+                track["class"] = det_class
+                track["confidence"] = det.get("confidence", max(cp.get("foreign", 0), cp.get("legit", 0)))
+            updated_ids.add(tid)
+
+        for d_idx in unmatched_dets:
+            det = detections[d_idx]
+            det_centroid = np.array(det["centroid"], dtype=float).reshape(2, 1)
+            tid = self._new_track(det_centroid)
+            self._tracks[tid]["age"] = 1
+            cp = class_probs_map.get(tid, det.get("class_probs", {}))
+            if cp:
+                self._tracks[tid]["class_probs"] = cp
+                det_class = det.get("class", "foreign" if cp.get("foreign", 0) > cp.get("legit", 0) else "legit")
+                self._tracks[tid]["class"] = det_class
+                self._tracks[tid]["confidence"] = det.get("confidence", max(cp.get("foreign", 0), cp.get("legit", 0)))
+            updated_ids.add(tid)
 
         active_tracks = []
         for tid, track in list(self._tracks.items()):

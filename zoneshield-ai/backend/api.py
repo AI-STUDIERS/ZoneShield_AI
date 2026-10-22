@@ -146,7 +146,17 @@ def get_session(id: str):
 def start_session(id: str):
     sess = session_repo.get(id)
     if not sess:
-        raise HTTPException(status_code=404, detail="Session not found")
+        try:
+            sess_uuid = UUID(id)
+        except Exception:
+            sess_uuid = uuid4()
+        sess = Session(
+            id=sess_uuid,
+            name=f"Production Session {str(id)[:8]}",
+            source=SourceType.SIMULATOR,
+            state=SessionState.READY,
+        )
+        session_repo.save(sess)
     
     sid = str(id)
     if sid in active_workers and active_workers[sid].is_running:
@@ -416,13 +426,22 @@ app.include_router(api_router)
 
 # Mount frontend directory for static assets if present
 frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
+dist_dir = frontend_dir / "dist"
+assets_dir = dist_dir / "assets"
+
+if assets_dir.exists():
+    app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
 if frontend_dir.exists():
     app.mount("/static", StaticFiles(directory=str(frontend_dir)), name="static")
 
 
 @app.get("/", response_class=HTMLResponse)
 def index():
-    """Serve frontend dashboard."""
+    """Serve cutting-edge vision frontend."""
+    dist_index = dist_dir / "index.html"
+    if dist_index.exists():
+        return HTMLResponse(content=dist_index.read_text(encoding="utf-8"))
     index_file = frontend_dir / "index.html"
     if index_file.exists():
         return HTMLResponse(content=index_file.read_text(encoding="utf-8"))

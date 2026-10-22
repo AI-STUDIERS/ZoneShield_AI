@@ -1,0 +1,50 @@
+{
+  "project": "ZoneShield AI",
+  "created_at": "2026-10-20T22:20:00Z",
+  "aspect": "16:9",
+  "fps": 30,
+  "recording_file": "C:/Users/Alence/.gemini/antigravity-ide/brain/b03b8279-dbb1-4cbc-b706-8641967946d6/zoneshield_demo_1792514950259.webp",
+  "stills": {
+    "dashboard_initial": "C:/Users/Alence/.gemini/antigravity-ide/brain/b03b8279-dbb1-4cbc-b706-8641967946d6/dashboard_initial_1792514973879.png",
+    "manual_fire_state": "C:/Users/Alence/.gemini/antigravity-ide/brain/b03b8279-dbb1-4cbc-b706-8641967946d6/manual_fire_state_1792514994825.png",
+    "kill_switch_active": "C:/Users/Alence/.gemini/antigravity-ide/brain/b03b8279-dbb1-4cbc-b706-8641967946d6/kill_switch_active_1792515007918.png",
+    "final_stable_state": "C:/Users/Alence/.gemini/antigravity-ide/brain/b03b8279-dbb1-4cbc-b706-8641967946d6/final_stable_state_1792515059375.png"
+  },
+  "scenes": [
+    {
+      "index": 1,
+      "name": "Dashboard Telemetry & Protected Shield Zone",
+      "slug": "dashboard-telemetry",
+      "status": "PASS",
+      "duration_s": 14.0,
+      "still": "dashboard_initial_1792514973879.png"
+    },
+    {
+      "index": 2,
+      "name": "Simulated Actuator Manual Burst",
+      "slug": "manual-actuator-burst",
+      "status": "PASS",
+      "duration_s": 12.0,
+      "still": "manual_fire_state_1792514994825.png"
+    },
+    {
+      "index": 3,
+      "name": "Emergency Safety Kill Switch (G5)",
+      "slug": "kill-switch-safety",
+      "status": "PASS",
+      "duration_s": 16.0,
+      "still": "kill_switch_active_1792515007918.png"
+    },
+    {
+      "index": 4,
+      "name": "Stream Playback & Multi-Object Tracking",
+      "slug": "stream-playback",
+      "status": "PASS",
+      "duration_s": 18.0,
+      "still": "final_stable_state_1792515059375.png"
+    }
+  ],
+  "total_scenes": 4,
+  "passed": 4,
+  "failed": 0
+}

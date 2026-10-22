@@ -1,8 +1,0 @@
-Benchmark,Mean (ms),Std (ms),P50 (ms),P95 (ms),P99 (ms),Throughput
-resize_downscale,0.139,0.001,0.139,0.14,0.14,7191.7 ops/s
-gaussian_blur,0.336,0.065,0.336,0.394,0.4,2978.9 ops/s
-adaptive_threshold,1.005,0.007,1.005,1.011,1.012,995.1 ops/s
-morphology_open,0.287,0.0,0.287,0.287,0.287,3483.1 ops/s
-morphology_close,0.292,0.009,0.292,0.3,0.3,3428.2 ops/s
-find_contours,5.073,0.361,5.073,5.398,5.427,197.1 ops/s
-E2E Pipeline,3.53,0.75,3.32,5.07,5.34,283.5 FPS
