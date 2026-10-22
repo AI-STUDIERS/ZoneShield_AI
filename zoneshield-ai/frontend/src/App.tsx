@@ -1,200 +1,128 @@
-import React, { useState, useRef, useEffect } from 'react';
-import type { SourceType, PipelineParameters } from './types/vision';
-import { useOpenCVStream } from './hooks/useOpenCVStream';
-import { HeaderNav } from './components/HeaderNav';
-import { TelemetryHUD } from './components/TelemetryHUD';
-import { ViewportWorkspace } from './components/ViewportWorkspace';
-import { DetectionsEventFeed } from './components/DetectionsEventFeed';
-import { ParameterDrawer } from './components/ParameterDrawer';
+import React, { useState, useEffect } from 'react';
+import { useTelemetryStore } from './store/useStore';
+import { telemetryStore, type TabId } from './store/telemetryStore';
+import { useTelemetrySocket } from './hooks/useTelemetrySocket';
+import { useKillSwitch } from './hooks/useKillSwitch';
+import { TopBar } from './components/topbar/TopBar';
+import { ConnectionBanner } from './components/common/ConnectionBanner';
+import { ViewportWorkspace } from './components/viewport/ViewportWorkspace';
+import { SidePanelTabs } from './components/panel/SidePanelTabs';
+import { ControlFooter } from './components/controls/ControlFooter';
+import { FooterBar } from './components/footer/FooterBar';
+import { ShortcutsModal } from './components/common/ShortcutsModal';
+import { api } from './api/client';
 import { sound } from './utils/audio';
 
 export const App: React.FC = () => {
-  const [sourceType, setSourceType] = useState<SourceType>('synthetic_feed');
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
-  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
-  const [uptimeSeconds, setUptimeSeconds] = useState<number>(0);
+  const sessionId = useTelemetryStore(state => state.sessionId);
+  const sessionState = useTelemetryStore(state => state.sessionState);
+  const isKillSwitchActive = useTelemetryStore(state => state.actuatorState.kill_switch);
+  const activeTab = useTelemetryStore(state => state.activeTab);
 
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
-  // Pipeline configuration state
-  const [params, setParams] = useState<PipelineParameters>({
-    confidenceThreshold: 0.65,
-    nmsThreshold: 0.45,
-    contrast: 1.0,
-    brightness: 0,
-    cannyLow: 50,
-    cannyHigh: 150,
-    blurKernel: 3,
-    hsvMin: [0, 0, 0],
-    hsvMax: [180, 255, 255],
-    preset: 'standard',
-    layers: {
-      boxes: true,
-      labels: true,
-      skeletons: true,
-      trajectories: true,
-      heatmaps: false,
-      opticalFlow: false,
-      masks: true,
-      jetCone: true
-    }
-  });
+  // Initialize resilient WebSocket telemetry & mock engine
+  const { retryNow } = useTelemetrySocket(sessionId);
+  const { engageKillSwitch } = useKillSwitch();
 
-  // OpenCV Vision Stream Hook
-  const { videoRef, detections, opticalFlowVectors, telemetry } = useOpenCVStream(
-    sourceType,
-    uploadedFile,
-    params,
-    isPlaying
-  );
-
-  // Uptime ticker
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setUptimeSeconds(prev => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Export PNG Snapshot
-  const handleExportPng = () => {
-    sound.playBeep(880, 'sine', 0.1);
-    if (!canvasRef.current) return;
-    const url = canvasRef.current.toDataURL('image/png');
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `opencv_frame_${Date.now()}.png`;
-    a.click();
-  };
-
-  // Export JSON Telemetry Log
-  const handleExportJson = () => {
-    sound.playBeep(660, 'sine', 0.1);
-    const data = {
-      telemetry,
-      params,
-      activeDetections: detections,
-      timestamp: new Date().toISOString()
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `telemetry_audit_${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // Export CSV Report
-  const handleExportCsv = () => {
-    sound.playBeep(660, 'sine', 0.1);
-    const headers = ['id', 'class', 'confidence', 'x', 'y', 'w', 'h', 'ttiMs'];
-    const rows = detections.map(d => [
-      d.id,
-      d.class,
-      (d.confidence * 100).toFixed(1) + '%',
-      d.bbox.x.toFixed(1),
-      d.bbox.y.toFixed(1),
-      d.bbox.w.toFixed(1),
-      d.bbox.h.toFixed(1),
-      d.ttiMs || 'N/A'
-    ]);
-    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `detections_${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  // Global Keyboard Shortcuts
+  // Keyboard shortcut listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
 
       if (e.code === 'Space') {
         e.preventDefault();
-        setIsPlaying(prev => !prev);
-        sound.playBeep(440, 'sine', 0.05);
-      } else if (e.code === 'KeyS') {
+        sound.playClick();
+        if (sessionState === 'running') {
+          api.pauseSession(sessionId).then(() => telemetryStore.setSessionState('paused')).catch(() => {});
+        } else {
+          api.startSession(sessionId).then(() => telemetryStore.setSessionState('running')).catch(() => {});
+        }
+      } else if (e.code === 'KeyK') {
         e.preventDefault();
-        handleExportPng();
+        engageKillSwitch('Operator keyboard shortcut [K]');
+      } else if (e.code === 'KeyM') {
+        e.preventDefault();
+        if (!isKillSwitchActive) {
+          sound.playClick();
+          api.manualFire(sessionId).catch(() => {});
+          telemetryStore.addTimelineEvent({
+            id: `manual_${Date.now()}`,
+            timestamp: Date.now(),
+            type: 'simulated_fire',
+            reason: 'Manual Operator Simulated Fire (M)',
+          });
+        }
+      } else if (e.code === 'Digit1') {
+        e.preventDefault();
+        sound.playClick();
+        telemetryStore.setViewportMode('radar2d');
+      } else if (e.code === 'Digit2') {
+        e.preventDefault();
+        sound.playClick();
+        telemetryStore.setViewportMode('iso3d');
+      } else if (e.code === 'Digit3') {
+        e.preventDefault();
+        sound.playClick();
+        telemetryStore.setViewportMode('mog2');
+      } else if (e.code === 'KeyT') {
+        e.preventDefault();
+        sound.playClick();
+        const tabs: TabId[] = ['telemetry', 'trace', 'review', 'selfcheck'];
+        const nextIdx = (tabs.indexOf(activeTab) + 1) % tabs.length;
+        telemetryStore.setActiveTab(tabs[nextIdx]);
+      } else if (e.key === '?') {
+        e.preventDefault();
+        sound.playClick();
+        setIsShortcutsOpen(prev => !prev);
       } else if (e.code === 'KeyF') {
         e.preventDefault();
+        sound.playClick();
         if (!document.fullscreenElement) {
           document.documentElement.requestFullscreen().catch(() => {});
         } else {
           document.exitFullscreen().catch(() => {});
         }
-      } else if (e.code === 'BracketLeft') {
-        setIsPlaying(false);
-      } else if (e.code === 'BracketRight') {
-        setIsPlaying(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [sessionId, sessionState, isKillSwitchActive, activeTab, engageKillSwitch]);
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden font-sans select-none">
-      {/* Top Header */}
-      <HeaderNav
-        onToggleDrawer={() => setIsDrawerOpen(prev => !prev)}
-        isDrawerOpen={isDrawerOpen}
-      />
+    <div
+      className={`flex flex-col h-screen w-screen bg-[#05070d] text-slate-100 overflow-hidden font-sans select-none transition-all duration-300 ${
+        isKillSwitchActive ? 'kill-switch-active-glow' : ''
+      }`}
+    >
+      {/* 1. Tactical Glass Top Bar */}
+      <TopBar onOpenShortcuts={() => setIsShortcutsOpen(true)} />
 
-      {/* Main Workspace Frame */}
-      <div className="flex-1 flex flex-col p-4 gap-3 overflow-hidden">
-        {/* Floating Telemetry HUD */}
-        <TelemetryHUD
-          telemetry={telemetry}
-          uptimeSeconds={uptimeSeconds}
-        />
+      {/* 2. Top Warning Strip (Connection Loss / Mock Mode / E-Stop Active) */}
+      <ConnectionBanner onRetry={retryNow} />
 
-        {/* Viewport Centerpiece & Side Feed Grid */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4 min-h-0">
-          <ViewportWorkspace
-            canvasRef={canvasRef}
-            videoRef={videoRef}
-            detections={detections}
-            opticalFlowVectors={opticalFlowVectors}
-            params={params}
-            sourceType={sourceType}
-            onSourceChange={setSourceType}
-            onFileUpload={(file) => {
-              setUploadedFile(file);
-              setSourceType('video_file');
-              sound.playBeep(520, 'sine', 0.1);
-            }}
-            isPlaying={isPlaying}
-            onTogglePlay={() => {
-              setIsPlaying(prev => !prev);
-              sound.playBeep(480, 'sine', 0.06);
-            }}
-            onStepFrame={() => setIsPlaying(false)}
-            onSnapshot={handleExportPng}
-          />
+      {/* 3. Main Operational Centerpiece (Viewport + Tabs Grid) */}
+      <main className="flex-1 grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-3 p-3 overflow-hidden min-h-0">
+        {/* Left: Live Multi-Mode Viewport */}
+        <ViewportWorkspace />
 
-          <DetectionsEventFeed
-            detections={detections}
-            onExportPng={handleExportPng}
-            onExportJson={handleExportJson}
-            onExportCsv={handleExportCsv}
-          />
-        </div>
-      </div>
+        {/* Right: Telemetry / Trace / Review / Self-Check Tabs */}
+        <SidePanelTabs />
+      </main>
 
-      {/* Live OpenCV Parameter Tuner Drawer */}
-      <ParameterDrawer
-        params={params}
-        onChange={setParams}
-        isOpen={isDrawerOpen}
-        onToggle={() => setIsDrawerOpen(false)}
+      {/* 4. Bottom Controls & Emergency Kill Switch Bar */}
+      <ControlFooter />
+
+      {/* 5. Mission Constraints Footer Bar */}
+      <FooterBar />
+
+      {/* 6. Shortcuts Help Dialog */}
+      <ShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
       />
     </div>
   );
