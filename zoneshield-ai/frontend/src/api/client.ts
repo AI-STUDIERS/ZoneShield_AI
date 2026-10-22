@@ -131,4 +131,25 @@ export const api = {
     if (!res.ok) throw new Error(`Failed to fetch metrics: ${res.statusText}`);
     return res.text();
   },
+
+  // Media & Video Datasets
+  async getVideos(): Promise<Array<{ name: string; filename: string; size_kb: number; is_image?: boolean; media_type?: 'image' | 'video' }>> {
+    const res = await fetch(`${API_BASE}/videos`);
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  async uploadMedia(file: File): Promise<{ status: string; filename: string; is_image: boolean; size_kb: number; media_type: 'image' | 'video' }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || 'Upload failed');
+    }
+    return res.json();
+  },
 };

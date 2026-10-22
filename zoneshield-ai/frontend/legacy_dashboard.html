@@ -1014,6 +1014,8 @@
                         <option value="conveyor_nominal_test.mp4">📹 Video: Nominal Belt</option>
                         <option value="conveyor_ambiguous_debris.mp4">📹 Video: Ambiguous Debris</option>
                     </select>
+                    <button id="btnUploadMedia" class="btn-deck" style="background: rgba(0, 240, 255, 0.12); border-color: var(--cyan-glow); color: var(--cyan-glow); cursor: pointer;" title="Upload custom video or image">📤 UPLOAD</button>
+                    <input type="file" id="mediaUploadInput" accept="video/*,image/*" style="display: none;" />
                     <button id="btnManualFire" class="btn-deck amber">🎯 MANUAL FIRE (M)</button>
                 </div>
 
@@ -1951,7 +1953,7 @@
             document.getElementById('uptimeVal').innerText = `${hrs}:${mins}:${secs}`;
         }, 1000);
 
-        // Dynamic Video List Loader
+        // Dynamic Video & Media List Loader
         async function loadVideoList() {
             try {
                 const res = await fetch('/api/v1/videos');
@@ -1959,16 +1961,50 @@
                     const videos = await res.json();
                     if (videos && videos.length > 0) {
                         const sel = document.getElementById('selectSource');
+                        const curVal = sel.value;
                         sel.innerHTML = '<option value="simulator">🎮 Digital Twin Simulator</option>';
                         videos.forEach((v, idx) => {
                             const opt = document.createElement('option');
                             opt.value = v.filename;
-                            opt.innerText = `📹 Video ${idx + 1}: ${v.name} (${v.size_kb} KB)`;
+                            const icon = v.is_image ? '🖼️ Image' : '📹 Video';
+                            opt.innerText = `${icon}: ${v.name} (${v.size_kb} KB)`;
                             sel.appendChild(opt);
                         });
+                        if (curVal) sel.value = curVal;
                     }
                 }
             } catch(e) {}
+        }
+
+        // Upload Media Handler
+        const uploadBtn = document.getElementById('btnUploadMedia');
+        const uploadInput = document.getElementById('mediaUploadInput');
+        if (uploadBtn && uploadInput) {
+            uploadBtn.onclick = () => uploadInput.click();
+            uploadInput.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                showToast(`Uploading ${file.name}...`);
+                const formData = new FormData();
+                formData.append('file', file);
+                try {
+                    const resp = await fetch('/api/v1/upload', { method: 'POST', body: formData });
+                    if (!resp.ok) {
+                        const err = await resp.json().catch(() => ({ detail: "Upload failed" }));
+                        throw new Error(err.detail || "Upload failed");
+                    }
+                    const data = await resp.json();
+                    showToast(`Ingested ${data.filename}! Launching live detection...`);
+                    audio.beep(880, 'sine', 0.1, 0.1);
+                    await loadVideoList();
+                    const sel = document.getElementById('selectSource');
+                    sel.value = data.filename;
+                    await fetch(`/api/v1/sessions/${sessionId}/start?video_file=${encodeURIComponent(data.filename)}`, { method: 'POST' });
+                    addDecisionFeedItem(`[MEDIA INGEST] ${data.filename} (${data.size_kb} KB) active in OpenCV live detection pipeline`, 'ai');
+                } catch(err) {
+                    showToast(`Upload error: ${err.message}`);
+                }
+            };
         }
 
         // Window load

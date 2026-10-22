@@ -280,3 +280,96 @@ class VideoFile(FrameSource):
         if self._cap is not None:
             self._cap.release()
             self._cap = None
+
+
+class ImageFile(FrameSource):
+    """Image file source.
+    
+    Streams an uploaded image (or overlays an uploaded object onto the conveyor)
+    with conveyor belt motion at target FPS so the vision pipeline (MOG2, Tracker,
+    Predictor, Actuator) detects, tracks, and intercepts it live.
+    """
+
+    def __init__(self, path: str, width: int = 640, height: int = 480, fps: int = 30) -> None:
+        self._path = path
+        self._width = width
+        self._height = height
+        self._fps = fps
+        self._frame_interval_s = 1.0 / fps
+        self._seq = 0
+        self._source_id = f"image:{path}"
+        self._raw_img = cv2.imread(path)
+        if self._raw_img is None:
+            self._raw_img = np.zeros((height, width, 3), dtype=np.uint8)
+            cv2.putText(self._raw_img, "Uploaded Image Placeholder", (50, height // 2),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
+
+        h, w = self._raw_img.shape[:2]
+        if w > 300 and h > 200:
+            self._base_img = cv2.resize(self._raw_img, (width, height))
+            self._is_crop = False
+        else:
+            self._base_img = self._raw_img
+            self._is_crop = True
+
+        self._y_pos = -50.0
+        self._speed_px_s = 140.0
+
+    @property
+    def source_id(self) -> str:
+        return self._source_id
+
+    def read(self) -> Optional[Frame]:
+        dt = self._frame_interval_s
+        self._y_pos += self._speed_px_s * dt
+
+        if self._is_crop:
+            canvas = np.full((self._height, self._width, 3), (35, 38, 42), dtype=np.uint8)
+            canvas[:, :40] = (25, 25, 28)
+            canvas[:, -40:] = (25, 25, 28)
+            y_offset = int((self._seq * 4) % 40)
+            for y_line in range(y_offset, self._height, 40):
+                cv2.line(canvas, (40, y_line), (self._width - 40, y_line), (42, 45, 50), 1)
+
+            ch, cw = self._base_img.shape[:2]
+            cx = self._width // 2
+            cy = int(self._y_pos)
+
+            y1 = cy - ch // 2
+            y2 = y1 + ch
+            x1 = cx - cw // 2
+            x2 = x1 + cw
+
+            if y2 > 0 and y1 < self._height:
+                clip_y1 = max(0, y1)
+                clip_y2 = min(self._height, y2)
+                clip_x1 = max(0, x1)
+                clip_x2 = min(self._width, x2)
+
+                src_y1 = clip_y1 - y1
+                src_y2 = src_y1 + (clip_y2 - clip_y1)
+                src_x1 = clip_x1 - x1
+                src_x2 = src_x1 + (clip_x2 - clip_x1)
+
+                canvas[clip_y1:clip_y2, clip_x1:clip_x2] = self._base_img[src_y1:src_y2, src_x1:src_x2]
+
+            if self._y_pos > self._height + 80:
+                self._y_pos = -50.0
+            frame_img = canvas
+        else:
+            canvas = self._base_img.copy()
+            shift = int((self._seq * 2) % 10) - 5
+            m = np.float32([[1, 0, 0], [0, 1, shift]])
+            frame_img = cv2.warpAffine(canvas, m, (self._width, self._height))
+
+        t_capture_ms = time.perf_counter() * 1000.0
+        result = Frame(image=frame_img, t_capture_ms=t_capture_ms, seq=self._seq, source_id=self.source_id)
+        self._seq += 1
+        return result
+
+    def restart(self) -> None:
+        self._y_pos = -50.0
+        self._seq = 0
+
+    def close(self) -> None:
+        pass

@@ -12,11 +12,12 @@ import platform
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+import re
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 import cv2
-from fastapi import APIRouter, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, FastAPI, File, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
@@ -52,7 +53,7 @@ for _p in (str(_root), str(_vision)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from zoneshield.framesource import SimulatorLive, VideoFile
+from zoneshield.framesource import SimulatorLive, VideoFile, ImageFile
 from zoneshield.selfcheck import run_selfcheck
 from backend.worker import SessionWorker
 
@@ -144,18 +145,56 @@ def get_session(id: str):
 
 @api_router.get("/videos")
 def list_test_videos():
-    """List available test video datasets."""
+    """List available test videos and uploaded images in docs/test_videos."""
     videos_dir = Path(__file__).resolve().parent.parent / "docs" / "test_videos"
     if not videos_dir.exists():
         return []
-    videos = []
-    for f in sorted(videos_dir.glob("*.mp4")):
-        videos.append({
-            "name": f.name,
-            "filename": f.name,
-            "size_kb": round(f.stat().st_size / 1024, 1),
-        })
-    return videos
+    media_files = []
+    exts = {".mp4", ".avi", ".mov", ".mkv", ".webm", ".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+    for f in sorted(videos_dir.iterdir()):
+        if f.is_file() and f.suffix.lower() in exts:
+            is_img = f.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+            media_files.append({
+                "name": f.name,
+                "filename": f.name,
+                "size_kb": round(f.stat().st_size / 1024, 1),
+                "is_image": is_img,
+                "media_type": "image" if is_img else "video",
+            })
+    return media_files
+
+
+@api_router.post("/upload")
+async def upload_media(file: UploadFile = File(...)):
+    """Upload a video or image file to showcase live detection."""
+    allowed_exts = {".mp4", ".avi", ".mov", ".mkv", ".webm", ".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in allowed_exts:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported format '{ext}'. Supported: {', '.join(sorted(allowed_exts))}"
+        )
+    
+    upload_dir = Path(__file__).resolve().parent.parent / "docs" / "test_videos"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    
+    clean_name = re.sub(r'[^a-zA-Z0-9_.-]', '_', file.filename or f"upload_{int(time.time())}{ext}")
+    target_path = upload_dir / clean_name
+    
+    content = await file.read()
+    target_path.write_bytes(content)
+    
+    is_image = ext in {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+    size_kb = round(len(content) / 1024, 1)
+    
+    logger.info(f"Uploaded media: {clean_name} ({size_kb} KB, is_image={is_image})")
+    return {
+        "status": "uploaded",
+        "filename": clean_name,
+        "is_image": is_image,
+        "size_kb": size_kb,
+        "media_type": "image" if is_image else "video",
+    }
 
 
 @api_router.post("/sessions/{id}/start")
@@ -192,7 +231,11 @@ def start_session(id: str, video_file: Optional[str] = None):
         if not vpath.exists():
             vpath = Path(video_file)
         if vpath.exists():
-            source = VideoFile(str(vpath), loop=True)
+            ext = vpath.suffix.lower()
+            if ext in {".jpg", ".jpeg", ".png", ".webp", ".bmp"}:
+                source = ImageFile(str(vpath))
+            else:
+                source = VideoFile(str(vpath), loop=True)
             sess.source = SourceType.FILE
             session_repo.save(sess)
 
