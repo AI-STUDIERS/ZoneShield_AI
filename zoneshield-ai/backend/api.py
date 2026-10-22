@@ -429,8 +429,8 @@ frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
 dist_dir = frontend_dir / "dist"
 assets_dir = dist_dir / "assets"
 
-if assets_dir.exists():
-    app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+assets_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
 
 if frontend_dir.exists():
     app.mount("/static", StaticFiles(directory=str(frontend_dir)), name="static")
@@ -438,11 +438,21 @@ if frontend_dir.exists():
 
 @app.get("/", response_class=HTMLResponse)
 def index():
-    """Serve cutting-edge vision frontend."""
+    """Serve cutting-edge vision frontend, with graceful fallback to tactical dashboard."""
     dist_index = dist_dir / "index.html"
     if dist_index.exists():
         return HTMLResponse(content=dist_index.read_text(encoding="utf-8"))
-    index_file = frontend_dir / "index.html"
-    if index_file.exists():
-        return HTMLResponse(content=index_file.read_text(encoding="utf-8"))
+    legacy_file = frontend_dir / "legacy_dashboard.html"
+    if legacy_file.exists():
+        return HTMLResponse(content=legacy_file.read_text(encoding="utf-8"))
     return HTMLResponse("<h1>ZoneShield AI Backend Ready</h1><p>Frontend static files loading...</p>")
+
+
+@app.get("/legacy", response_class=HTMLResponse)
+def legacy_dashboard():
+    """Serve standalone tactical dashboard."""
+    legacy_file = frontend_dir / "legacy_dashboard.html"
+    if legacy_file.exists():
+        return HTMLResponse(content=legacy_file.read_text(encoding="utf-8"))
+    return HTMLResponse("<h1>Legacy Dashboard Not Found</h1>", status_code=404)
+
