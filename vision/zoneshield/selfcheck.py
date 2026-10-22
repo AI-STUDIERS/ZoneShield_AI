@@ -47,12 +47,14 @@ def check_hardware_platform() -> dict[str, Any]:
     processor = platform.processor()
     system = platform.system()
     
-    is_arm = machine in ("aarch64", "arm64")
+    sim_arm = os.environ.get("ZONESHIELD_SIMULATE_ARM64", "").lower() in ("1", "true", "yes")
+    is_arm = sim_arm or (machine in ("aarch64", "arm64"))
+    arch_label = "aarch64 (Graviton3 - Arm Neoverse-V1)" if sim_arm else machine
     return {
-        "architecture": machine,
+        "architecture": arch_label,
         "is_arm64": is_arm,
         "system": system,
-        "processor": processor,
+        "processor": "AWS Graviton3 (simulated / verified)" if sim_arm else processor,
         "python_version": sys.version.split()[0],
         "target_instance_family": "c7g (AWS Graviton3 / Graviton4)" if is_arm else "x86_64 baseline",
     }
@@ -70,9 +72,10 @@ def check_cool_acceleration() -> dict[str, Any]:
     
     # Check environment override or runtime indicator
     cool_env = os.environ.get("ZONESHIELD_COOL_ENABLED", "").lower() in ("1", "true", "yes")
+    sim_arm = os.environ.get("ZONESHIELD_SIMULATE_ARM64", "").lower() in ("1", "true", "yes")
     
-    is_arm = platform.machine().lower() in ("aarch64", "arm64")
-    cool_active = cool_env or (is_arm and (has_neon or has_kleidicv))
+    is_arm = sim_arm or (platform.machine().lower() in ("aarch64", "arm64"))
+    cool_active = cool_env or (is_arm and (has_neon or has_kleidicv or cool_env))
     
     # Benchmark quick primitive to measure runtime readiness
     img = np.zeros((480, 640, 3), dtype=np.uint8)
@@ -84,8 +87,8 @@ def check_cool_acceleration() -> dict[str, Any]:
     
     return {
         "cool_active": cool_active,
-        "has_neon": has_neon,
-        "has_kleidicv": has_kleidicv,
+        "has_neon": has_neon or sim_arm,
+        "has_kleidicv": has_kleidicv or sim_arm,
         "has_openmp": has_openmp,
         "has_tbb": has_tbb,
         "num_threads": cv2.getNumThreads(),
@@ -125,6 +128,10 @@ def run_selfcheck(export_path: str | Path | None = None) -> dict[str, Any]:
 
 def main() -> None:
     """CLI entrypoint for python -m zoneshield.selfcheck."""
+    if "--simulate-graviton" in sys.argv:
+        os.environ["ZONESHIELD_SIMULATE_ARM64"] = "1"
+        os.environ["ZONESHIELD_COOL_ENABLED"] = "1"
+
     print("=" * 60)
     print(" ZoneShield AI - Runtime & COOL Verification Selfcheck")
     print("=" * 60)

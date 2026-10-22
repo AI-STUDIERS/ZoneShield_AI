@@ -1,0 +1,15 @@
+# ZoneShield AI - Conveyor Belt Object Detection/Segmentation Dataset
+# Source: Roboflow conveyor-hhrzw v3 (CC BY 4.0)
+# Labels: YOLOv8 segmentation format (polygon annotations)
+# Images: 640x640 | Train: 837 | Val: 211 | Test: 87
+# WARNING: Class 2 (kartonbox) has only 8 samples - heavy augmentation needed
+
+train: C:/Users/Alence/Downloads/conveyor.v3i.yolov8/train/images
+val: C:/Users/Alence/Downloads/conveyor.v3i.yolov8/valid/images
+test: C:/Users/Alence/Downloads/conveyor.v3i.yolov8/test/images
+
+nc: 3
+names:
+  0: cardboard_box
+  1: conveyor
+  2: kartonbox

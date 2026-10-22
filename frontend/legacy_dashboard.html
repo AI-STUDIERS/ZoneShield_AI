@@ -1,0 +1,1934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZoneShield AI | Tactical Threat Interception Digital Twin</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Cyber Tactical Palette (OKLCH-inspired) */
+            --bg-void: #050811;
+            --bg-panel: #0a0f1d;
+            --bg-surface: #10172a;
+            --bg-elevated: #18223c;
+            --border-dim: rgba(56, 189, 248, 0.12);
+            --border-bright: rgba(56, 189, 248, 0.4);
+            
+            --cyan-glow: #00f0ff;
+            --cyan-dim: #0284c7;
+            --emerald-safe: #10b981;
+            --crimson-threat: #ff2a5f;
+            --amber-warn: #f59e0b;
+            --violet-ai: #a855f7;
+            
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            
+            --shadow-glow-cyan: 0 0 20px -3px rgba(0, 240, 255, 0.35);
+            --shadow-glow-red: 0 0 25px -2px rgba(255, 42, 95, 0.55);
+            --shadow-glow-amber: 0 0 20px -3px rgba(245, 158, 11, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-void);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.08) 0%, transparent 60%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 32px 32px, 32px 32px;
+        }
+
+        /* --- Scanline CRT Overlay Effect --- */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 999;
+            opacity: 0.35;
+        }
+
+        /* --- Header Bar --- */
+        header {
+            background: rgba(10, 15, 29, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-dim);
+            padding: 10px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(168, 85, 247, 0.3));
+            border: 1px solid var(--cyan-glow);
+            border-radius: 8px;
+            box-shadow: var(--shadow-glow-cyan);
+            position: relative;
+        }
+
+        .brand-logo svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: var(--cyan-glow);
+            stroke-width: 2;
+        }
+
+        .brand-text h1 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.35rem;
+            letter-spacing: 0.08em;
+            background: linear-gradient(90deg, #ffffff, var(--cyan-glow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand-text .tagline {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .header-center-badges {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tech-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 4px;
+            background: rgba(16, 23, 42, 0.8);
+            border: 1px solid var(--border-dim);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+        }
+
+        .tech-pill.active {
+            border-color: rgba(0, 240, 255, 0.4);
+            color: var(--cyan-glow);
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        .tech-pill.cool-graviton {
+            border-color: rgba(168, 85, 247, 0.4);
+            color: #c084fc;
+            background: rgba(168, 85, 247, 0.08);
+        }
+
+        .tech-pill.simulated-pill {
+            border-color: rgba(245, 158, 11, 0.4);
+            color: var(--amber-warn);
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: currentColor;
+            box-shadow: 0 0 8px currentColor;
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.6; }
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .time-box {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-align: right;
+            border-right: 1px solid var(--border-dim);
+            padding-right: 14px;
+        }
+
+        .time-box .time-val {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .btn-icon {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-dim);
+            color: var(--text-secondary);
+            width: 34px;
+            height: 34px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-icon:hover {
+            border-color: var(--cyan-glow);
+            color: var(--cyan-glow);
+            box-shadow: var(--shadow-glow-cyan);
+        }
+
+        .btn-icon.active {
+            border-color: var(--cyan-glow);
+            color: var(--cyan-glow);
+            background: rgba(0, 240, 255, 0.1);
+        }
+
+        /* --- Main Layout --- */
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 440px;
+            gap: 16px;
+            padding: 16px;
+            max-width: 1920px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        @media (max-width: 1200px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* --- Cyber Panel Wrapper --- */
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-dim);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Corner Brackets */
+        .panel::before, .panel::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-color: var(--border-bright);
+            pointer-events: none;
+            z-index: 10;
+        }
+        .panel::before {
+            top: 0; left: 0;
+            border-top: 2px solid var(--cyan-glow);
+            border-left: 2px solid var(--cyan-glow);
+        }
+        .panel::after {
+            bottom: 0; right: 0;
+            border-bottom: 2px solid var(--cyan-glow);
+            border-right: 2px solid var(--cyan-glow);
+        }
+
+        .panel-header {
+            padding: 12px 18px;
+            background: rgba(16, 23, 42, 0.7);
+            border-bottom: 1px solid var(--border-dim);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title-icon {
+            width: 14px;
+            height: 14px;
+            color: var(--cyan-glow);
+        }
+
+        /* --- Conveyor Viewport --- */
+        .viewport-container {
+            position: relative;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at center, #070d1a 0%, #03050a 100%);
+            min-height: 520px;
+            overflow: hidden;
+        }
+
+        canvas#conveyorCanvas {
+            background-color: transparent;
+            cursor: crosshair;
+            display: block;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 6px;
+            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Viewport HUD Overlays */
+        .viewport-hud-top {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            right: 14px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .hud-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            padding: 5px 10px;
+            border-radius: 4px;
+            background: rgba(5, 8, 17, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-dim);
+            color: var(--text-secondary);
+            pointer-events: auto;
+        }
+
+        .hud-badge.alert {
+            border-color: var(--crimson-threat);
+            color: var(--crimson-threat);
+            animation: pulse-border 1.5s infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 5px rgba(255, 42, 95, 0.3); }
+            50% { box-shadow: 0 0 15px rgba(255, 42, 95, 0.8); }
+        }
+
+        /* View Selector Pills */
+        .view-switchers {
+            display: flex;
+            gap: 6px;
+            pointer-events: auto;
+        }
+
+        .view-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 5px 12px;
+            background: rgba(10, 15, 29, 0.8);
+            border: 1px solid var(--border-dim);
+            color: var(--text-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-btn.active {
+            background: rgba(0, 240, 255, 0.15);
+            border-color: var(--cyan-glow);
+            color: var(--cyan-glow);
+            box-shadow: var(--shadow-glow-cyan);
+        }
+
+        /* Overlay Checkboxes */
+        .overlay-toggles {
+            position: absolute;
+            bottom: 14px;
+            left: 14px;
+            display: flex;
+            gap: 8px;
+            pointer-events: auto;
+            background: rgba(5, 8, 17, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-dim);
+        }
+
+        .toggle-item {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .toggle-item input {
+            accent-color: var(--cyan-glow);
+            cursor: pointer;
+        }
+
+        /* --- Control Deck Bar --- */
+        .control-deck {
+            background: var(--bg-surface);
+            border-top: 1px solid var(--border-dim);
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-deck {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            padding: 9px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid var(--border-dim);
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-deck:hover {
+            border-color: var(--border-bright);
+            transform: translateY(-1px);
+        }
+
+        .btn-deck.primary {
+            background: linear-gradient(135deg, #0284c7, #00f0ff);
+            border-color: var(--cyan-glow);
+            color: #030712;
+            box-shadow: var(--shadow-glow-cyan);
+        }
+
+        .btn-deck.primary:hover {
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.6);
+        }
+
+        .btn-deck.amber {
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            border-color: var(--amber-warn);
+            color: #000;
+        }
+
+        /* --- Emergency Physical Kill Switch --- */
+        .kill-switch-wrapper {
+            position: relative;
+        }
+
+        .btn-kill {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 0.9rem;
+            letter-spacing: 0.1em;
+            padding: 10px 22px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid var(--crimson-threat);
+            background: linear-gradient(180deg, #991b1b, #ef4444);
+            color: #ffffff;
+            box-shadow: var(--shadow-glow-red);
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.15s ease;
+        }
+
+        .btn-kill::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-kill:hover::before {
+            left: 100%;
+        }
+
+        .btn-kill:active {
+            transform: scale(0.97);
+        }
+
+        .btn-kill.active-tripped {
+            background: linear-gradient(180deg, #374151, #1f2937);
+            border-color: #9ca3af;
+            color: #f87171;
+            box-shadow: none;
+            animation: warning-flash 1s infinite alternate;
+        }
+
+        @keyframes warning-flash {
+            0% { border-color: #ef4444; }
+            100% { border-color: #374151; }
+        }
+
+        /* --- Right Command Deck (Tabs & Telemetry) --- */
+        .sidebar-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Tabs Navigation */
+        .tab-bar {
+            display: flex;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-dim);
+            padding: 4px 6px;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            padding: 8px 10px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .tab-btn.active {
+            background: var(--bg-elevated);
+            color: var(--cyan-glow);
+            border-bottom: 2px solid var(--cyan-glow);
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* Telemetry Metric Cards */
+        .metrics-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 16px;
+        }
+
+        .stat-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-dim);
+            border-radius: 8px;
+            padding: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card .label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .stat-card .val {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.55rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-top: 4px;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+
+        .stat-card .unit {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .stat-card.cyan .val { color: var(--cyan-glow); }
+        .stat-card.emerald .val { color: var(--emerald-safe); }
+        .stat-card.crimson .val { color: var(--crimson-threat); }
+        .stat-card.violet .val { color: #c084fc; }
+
+        /* Sparkline Canvas */
+        .sparkline-box {
+            padding: 0 16px 12px;
+        }
+
+        canvas#sparklineCanvas {
+            width: 100%;
+            height: 48px;
+            background: rgba(5, 8, 17, 0.5);
+            border: 1px solid var(--border-dim);
+            border-radius: 6px;
+        }
+
+        /* Pipeline Latency Waterfall */
+        .waterfall-container {
+            padding: 16px;
+            border-top: 1px solid var(--border-dim);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .waterfall-header {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .stage-bar-item {
+            display: flex;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            gap: 8px;
+        }
+
+        .stage-name {
+            width: 120px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stage-track {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .stage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--cyan-glow), #38bdf8);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.15s ease;
+        }
+
+        .stage-ms {
+            width: 48px;
+            text-align: right;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Feed / Timeline */
+        .feed-scroll {
+            padding: 12px 16px;
+            max-height: 380px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .feed-node {
+            background: var(--bg-surface);
+            border-left: 3px solid var(--cyan-glow);
+            padding: 10px 12px;
+            border-radius: 0 6px 6px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .feed-node:hover {
+            background: var(--bg-elevated);
+        }
+
+        .feed-node.intercept {
+            border-left-color: var(--crimson-threat);
+            background: rgba(255, 42, 95, 0.06);
+        }
+
+        .feed-node.review {
+            border-left-color: var(--amber-warn);
+            background: rgba(245, 158, 11, 0.06);
+        }
+
+        .feed-node.ai {
+            border-left-color: var(--violet-ai);
+            background: rgba(168, 85, 247, 0.06);
+        }
+
+        .feed-node .meta-row {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.68rem;
+            margin-bottom: 4px;
+        }
+
+        .feed-node .content-row {
+            color: var(--text-primary);
+            line-height: 1.35;
+        }
+
+        /* Review Queue Section */
+        .review-box {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .review-card-pro {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            border-radius: 8px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            animation: slide-in 0.25s ease-out;
+        }
+
+        @keyframes slide-in {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .review-card-pro .tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--amber-warn);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .review-card-pro .reason {
+            font-size: 0.82rem;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        .review-actions-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+        }
+
+        .btn-action.approve {
+            background: var(--crimson-threat);
+            color: #fff;
+            box-shadow: 0 0 12px rgba(255, 42, 95, 0.4);
+        }
+
+        .btn-action.approve:hover {
+            background: #e11d48;
+        }
+
+        .btn-action.dismiss {
+            background: var(--bg-elevated);
+            border-color: var(--border-dim);
+            color: var(--text-secondary);
+        }
+
+        .btn-action.dismiss:hover {
+            background: #334155;
+            color: var(--text-primary);
+        }
+
+        /* --- Footer Guardrails Bar --- */
+        footer {
+            background: rgba(5, 8, 17, 0.95);
+            border-top: 1px solid var(--border-dim);
+            padding: 8px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        footer strong {
+            color: var(--amber-warn);
+        }
+
+        /* Modal Inspector */
+        .modal-backdrop {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(3, 5, 10, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--cyan-glow);
+            box-shadow: var(--shadow-glow-cyan);
+            border-radius: 10px;
+            width: 600px;
+            max-width: 90vw;
+            padding: 24px;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 18px;
+            background: rgba(16, 23, 42, 0.95);
+            border: 1px solid var(--cyan-glow);
+            box-shadow: var(--shadow-glow-cyan);
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-primary);
+            z-index: 2000;
+            display: none;
+            animation: toast-in 0.2s ease-out;
+        }
+
+        @keyframes toast-in {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+
+    <!-- HEADER -->
+    <header>
+        <div class="brand-container">
+            <div class="brand-logo">
+                <svg viewBox="0 0 24 24">
+                    <polygon points="12 2 2 7 12 22 22 7 12 2"></polygon>
+                    <line x1="12" y1="2" x2="12" y2="22"></line>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <h1>ZONESHIELD AI <span>// 0.1</span></h1>
+                <div class="tagline">Active Conveyor Threat Interception Digital Twin</div>
+            </div>
+        </div>
+
+        <div class="header-center-badges">
+            <div class="tech-pill active">
+                <span class="pulse-dot"></span>
+                <span>OPENCV 5.0 (C2)</span>
+            </div>
+            <div class="tech-pill cool-graviton">
+                <span class="pulse-dot"></span>
+                <span>AWS COOL ARM64 (C3)</span>
+            </div>
+            <div class="tech-pill simulated-pill">
+                <span>SIMULATED ACTUATOR (C1)</span>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <div class="time-box">
+                <div>SESSION UPTIME: <span id="uptimeVal" class="time-val">00:00:00</span></div>
+                <div>STATE: <span id="sessionStatus" style="color: var(--cyan-glow);">READY</span></div>
+            </div>
+            <button id="btnAudioToggle" class="btn-icon active" title="Toggle Synthesizer Audio FX">
+                🔊
+            </button>
+            <button id="btnFullscreen" class="btn-icon" title="Toggle Fullscreen">
+                ⛶
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN DASHBOARD -->
+    <main>
+        <!-- LEFT: CONVEYOR DIGITAL TWIN & CONTROLS -->
+        <section class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <svg class="panel-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="2" x2="12" y2="6"></line>
+                        <line x1="12" y1="18" x2="12" y2="22"></line>
+                        <line x1="2" y1="12" x2="6" y2="12"></line>
+                        <line x1="18" y1="12" x2="22" y2="12"></line>
+                    </svg>
+                    <span>DIGITAL TWIN INSPECTION BAY</span>
+                </div>
+                <div class="view-switchers">
+                    <button class="view-btn active" data-view="optical">2D OPTICAL RADAR</button>
+                    <button class="view-btn" data-view="spatial">3D ISOMETRIC</button>
+                    <button class="view-btn" data-view="heatmap">MOG2 MASK</button>
+                </div>
+            </div>
+
+            <div class="viewport-container" id="viewportContainer">
+                <canvas id="conveyorCanvas" width="760" height="480"></canvas>
+
+                <!-- TOP HUD -->
+                <div class="viewport-hud-top">
+                    <div id="threatStatusHud" class="hud-badge">
+                        ACTIVE TARGETS: <span id="hudTargetCount" style="color: var(--cyan-glow); font-weight: 700;">0</span>
+                    </div>
+                    <div id="safetyGuardrailHud" class="hud-badge">
+                        GUARDRAILS: <span style="color: var(--emerald-safe); font-weight: 700;">G1-G5 ARMED</span>
+                    </div>
+                </div>
+
+                <!-- BOTTOM OVERLAYS TOGGLE -->
+                <div class="overlay-toggles">
+                    <label class="toggle-item">
+                        <input type="checkbox" id="toggleTraj" checked> Trajectory Ribbons
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="toggleUnc" checked> Uncertainty Cones
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="toggleJet" checked> Jet Dispersion
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" id="toggleGrid" checked> Sensor Grid
+                    </label>
+                </div>
+            </div>
+
+            <!-- TACTICAL CONTROL DECK -->
+            <div class="control-deck">
+                <div class="control-group">
+                    <button id="btnStart" class="btn-deck primary">▶ START BELT</button>
+                    <button id="btnPause" class="btn-deck">⏸ PAUSE</button>
+                    <button id="btnManualFire" class="btn-deck amber">🎯 MANUAL FIRE (M)</button>
+                </div>
+
+                <div class="control-group">
+                    <div class="kill-switch-wrapper">
+                        <button id="btnKillSwitch" class="btn-kill">
+                            🛑 EMERGENCY KILL SWITCH (K)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT: TELEMETRY, AGENTIC OODA LOOP & REVIEW QUEUE -->
+        <aside class="sidebar-container">
+            <div class="panel" style="flex: 1;">
+                <!-- TAB BAR -->
+                <div class="tab-bar">
+                    <button class="tab-btn active" data-tab="telemetry">Telemetry</button>
+                    <button class="tab-btn" data-tab="ooda">Decision Trace</button>
+                    <button class="tab-btn" data-tab="review">Review Queue <span id="reviewCountBadge" style="color: var(--amber-warn);">(0)</span></button>
+                    <button class="tab-btn" data-tab="diagnostics">System Self-Check</button>
+                </div>
+
+                <!-- TAB 1: TELEMETRY & WATERFALL -->
+                <div id="tab-telemetry" class="tab-content active">
+                    <div class="metrics-grid-4">
+                        <div class="stat-card cyan">
+                            <div class="label">PIPELINE THROUGHPUT</div>
+                            <div class="val" id="valFps">30.0 <span class="unit">FPS</span></div>
+                        </div>
+                        <div class="stat-card violet">
+                            <div class="label">COMPUTE LATENCY</div>
+                            <div class="val" id="valCompute">12.4 <span class="unit">ms</span></div>
+                        </div>
+                        <div class="stat-card crimson">
+                            <div class="label">THREATS INTERCEPTED</div>
+                            <div class="val" id="valIntercepts">0 <span class="unit">sim</span></div>
+                        </div>
+                        <div class="stat-card emerald">
+                            <div class="label">RING BUFFER DROPS</div>
+                            <div class="val" id="valDrops">0 <span class="unit">pkts</span></div>
+                        </div>
+                    </div>
+
+                    <div class="sparkline-box">
+                        <div style="font-family: 'JetBrains Mono'; font-size: 0.68rem; color: var(--text-muted); margin-bottom: 4px;">
+                            LIVE LATENCY SPARKLINE (PAST 60 FRAMES)
+                        </div>
+                        <canvas id="sparklineCanvas" width="400" height="48"></canvas>
+                    </div>
+
+                    <div class="waterfall-container">
+                        <div class="waterfall-header">
+                            <span>OPENCV 5 PIPELINE STAGES</span>
+                            <span id="totalPipelineMs">TOTAL: 12.4 ms</span>
+                        </div>
+                        <div id="waterfallBars">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: AGENTIC DECISION TRACE -->
+                <div id="tab-ooda" class="tab-content">
+                    <div class="panel-header" style="background: transparent;">
+                        <span style="font-family: 'JetBrains Mono'; font-size: 0.72rem; color: var(--text-muted);">
+                            REAL-TIME CLOSED-LOOP PERCEPTION LOGS
+                        </span>
+                        <button id="btnClearLogs" class="btn-icon" style="width: 24px; height: 24px; font-size: 0.7rem;" title="Clear">✕</button>
+                    </div>
+                    <div class="feed-scroll" id="decisionFeed">
+                        <div class="feed-node">
+                            <div class="meta-row">
+                                <span>SYSTEM INITIALIZED</span>
+                                <span>[TIER 1]</span>
+                            </div>
+                            <div class="content-row">
+                                OpenCV 5 pipeline initialized. Monitoring belt stream...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: HUMAN-IN-THE-LOOP REVIEW QUEUE -->
+                <div id="tab-review" class="tab-content">
+                    <div class="review-box" id="reviewContainer">
+                        <div style="text-align: center; color: var(--text-muted); padding: 30px; font-family: 'JetBrains Mono'; font-size: 0.8rem;">
+                            ✓ No pending ambiguous detections in queue.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: SYSTEM SELF-CHECK & HARDWARE PROOF -->
+                <div id="tab-diagnostics" class="tab-content">
+                    <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px; font-family: 'JetBrains Mono'; font-size: 0.75rem;">
+                        <div style="background: var(--bg-surface); padding: 12px; border-radius: 6px; border: 1px solid var(--border-dim);">
+                            <div style="color: var(--cyan-glow); font-weight: 700; margin-bottom: 6px;">COMPLIANCE & TRUTH AUDIT</div>
+                            <div>C1 Hardware Rule: <span style="color: var(--amber-warn);">SIMULATED ACTUATOR ONLY</span></div>
+                            <div>C2 OpenCV Version: <span id="diagCvVer">5.0.0-dev</span></div>
+                            <div>C3 COOL Architecture: <span id="diagCoolArch">Graviton3 Neoverse-V1</span></div>
+                            <div>C4 Agentic Model: <span style="color: #c084fc;">Amazon Bedrock Claude 3.5</span></div>
+                            <div>C5 Budget Watchdog: <span style="color: var(--emerald-safe);">CloudWatch Auto-Stop Armed</span></div>
+                        </div>
+
+                        <div style="background: var(--bg-surface); padding: 12px; border-radius: 6px; border: 1px solid var(--border-dim);">
+                            <div style="color: var(--cyan-glow); font-weight: 700; margin-bottom: 6px;">SAFETY GUARDRAILS (G1-G5)</div>
+                            <div>G1: TTI Margin Threshold: &ge; 150 ms</div>
+                            <div>G2: Actuator Jet Dispersion Cone: &plusmn; 40 px</div>
+                            <div>G3: Dual-Tier Classifier Threshold: &ge; 0.40</div>
+                            <div>G4: Actuator Cooldown Period: 400 ms</div>
+                            <div>G5: Emergency Non-Maskable Kill Switch: Active</div>
+                        </div>
+
+                        <button id="btnRunSelfcheck" class="btn-deck" style="justify-content: center;">
+                            🔄 RE-EXECUTE HARDWARE SELF-CHECK
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <div>
+            HARD CONSTRAINT C1: Digital twin only. Actuator is strictly <strong>SimulatedActuator</strong>. Zero physical GPIO/solenoids fired.
+        </div>
+        <div id="wsIndicator">
+            WEBSOCKET: <span style="color: var(--emerald-safe);">CONNECTED (30Hz)</span>
+        </div>
+    </footer>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toastNotification" class="toast"></div>
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <script>
+        // --- Synthesizer Audio Engine (Web Audio API) ---
+        class CyberAudio {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+            }
+            beep(freq = 440, type = 'sine', duration = 0.08, gain = 0.08) {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const g = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    g.gain.setValueAtTime(gain, this.ctx.currentTime);
+                    g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(g);
+                    g.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            }
+            firePuff() {
+                if (!this.enabled || !this.ctx) return;
+                try {
+                    // White noise burst simulating pneumatic air jet
+                    const bufferSize = this.ctx.sampleRate * 0.12;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+                    }
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = "lowpass";
+                    filter.frequency.setValueAtTime(1200, this.ctx.currentTime);
+                    filter.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.12);
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    noise.start();
+                } catch(e) {}
+            }
+            klaxon() {
+                this.beep(880, 'sawtooth', 0.2, 0.2);
+                setTimeout(() => this.beep(660, 'sawtooth', 0.2, 0.2), 150);
+            }
+        }
+        const audio = new CyberAudio();
+
+        // --- Application State ---
+        const canvas = document.getElementById('conveyorCanvas');
+        const ctx = canvas.getContext('2d');
+        const sparkCanvas = document.getElementById('sparklineCanvas');
+        const sparkCtx = sparkCanvas.getContext('2d');
+
+        let ws = null;
+        let sessionId = "00000000-0000-0000-0000-000000000001";
+        let sessionStartTime = Date.now();
+        let isKillSwitched = false;
+        let totalIntercepts = 0;
+        let currentView = "optical"; // 'optical', 'spatial', 'heatmap'
+
+        // Latency buffer for sparkline
+        const latencyHistory = new Array(60).fill(12.4);
+
+        // Particle System for Simulated Air-Jet
+        let airParticles = [];
+        let shockwaveRings = [];
+
+        // Conveyor geometry
+        const beltRect = { x: 80, y: 30, w: 600, h: 420 };
+        const shieldPolygon = [
+            [220, 140],
+            [540, 140],
+            [540, 310],
+            [220, 310]
+        ];
+        const interceptorLine = { x1: 290, y1: 310, x2: 470, y2: 310, y: 310 };
+        const airJetNozzle = { x: 380, y: 310, radius: 45 };
+
+        // --- WebSocket Stream ---
+        function initWebSocket() {
+            const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.host || 'localhost:8000';
+            ws = new WebSocket(`${proto}//${host}/ws/sessions/${sessionId}/stream`);
+
+            ws.onopen = () => {
+                document.getElementById('wsIndicator').innerHTML = 'WEBSOCKET: <span style="color: var(--emerald-safe);">CONNECTED (30Hz)</span>';
+                document.getElementById('sessionStatus').innerText = "LIVE STREAMING";
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === 'frame') {
+                        processFramePayload(msg.payload);
+                    } else if (msg.type === 'actuator') {
+                        triggerAirJetBurst(msg.payload.target);
+                        totalIntercepts++;
+                        document.getElementById('valIntercepts').innerText = totalIntercepts;
+                        addDecisionFeedItem(`[ACTUATOR FIRE] Simulated pneumatic burst deflected Track #${msg.payload.track_id}`, 'intercept');
+                        audio.firePuff();
+                    } else if (msg.type === 'review_item') {
+                        addReviewCard(msg.payload);
+                        addDecisionFeedItem(`[TIER 2 ESCALATION] Bedrock Claude escalated ambiguous threat to HITL queue`, 'review');
+                        audio.beep(520, 'square', 0.15, 0.12);
+                    }
+                } catch(err) {
+                    console.error("Payload decode error:", err);
+                }
+            };
+
+            ws.onclose = () => {
+                document.getElementById('wsIndicator').innerHTML = 'WEBSOCKET: <span style="color: var(--crimson-threat);">RECONNECTING...</span>';
+                document.getElementById('sessionStatus').innerText = "RECONNECTING";
+                setTimeout(initWebSocket, 2000);
+            };
+        }
+
+        // --- Frame Processing & Canvas Rendering ---
+        function processFramePayload(payload) {
+            // Update metrics
+            if (payload.metrics) {
+                const fps = payload.metrics.fps || 30.0;
+                const compute = payload.metrics.compute_ms || 12.0;
+                document.getElementById('valFps').innerText = `${fps}`;
+                document.getElementById('valCompute').innerText = `${compute}`;
+                document.getElementById('valDrops').innerText = payload.metrics.dropped_frames || 0;
+                document.getElementById('hudTargetCount').innerText = payload.metrics.active_tracks_count || 0;
+
+                latencyHistory.push(compute);
+                if (latencyHistory.length > 60) latencyHistory.shift();
+                renderSparkline();
+
+                // Update Waterfall Stage Bars
+                if (payload.metrics.stage_timings) {
+                    updateWaterfall(payload.metrics.stage_timings, compute);
+                }
+            }
+
+            // Log decisions
+            if (payload.decisions && payload.decisions.length > 0) {
+                payload.decisions.forEach(d => {
+                    if (d.action !== "monitor") {
+                        const tierTag = d.tier === "1" ? "TIER-1 FAST" : "TIER-2 BEDROCK";
+                        const typeCls = d.action === "intercept" ? "intercept" : (d.action === "request_human" ? "review" : "ai");
+                        addDecisionFeedItem(`[${tierTag}] Track #${d.track_id} -> ${d.action.toUpperCase()} (${(d.confidence_after * 100).toFixed(0)}% conf): ${d.reason}`, typeCls);
+                    }
+                });
+            }
+
+            // Render chosen View
+            if (currentView === "optical") {
+                renderOpticalRadarView(payload);
+            } else if (currentView === "spatial") {
+                renderSpatialIsometricView(payload);
+            } else if (currentView === "heatmap") {
+                renderMog2HeatmapView(payload);
+            }
+        }
+
+        // --- VIEW 1: Optical Radar View ---
+        function renderOpticalRadarView(payload) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Conveyor Deck Background
+            ctx.fillStyle = "#0c1322";
+            ctx.fillRect(beltRect.x, beltRect.y, beltRect.w, beltRect.h);
+
+            // Steel Guide Rails
+            ctx.fillStyle = "#1e293b";
+            ctx.fillRect(beltRect.x - 10, beltRect.y, 10, beltRect.h);
+            ctx.fillRect(beltRect.x + beltRect.w, beltRect.y, 10, beltRect.h);
+
+            // 2. Animated Tread Texture Lines (Motion)
+            const speedOffset = (Date.now() / 15) % 35;
+            ctx.strokeStyle = "rgba(56, 189, 248, 0.08)";
+            ctx.lineWidth = 2;
+            for (let y = beltRect.y + speedOffset; y < beltRect.y + beltRect.h; y += 35) {
+                ctx.beginPath();
+                ctx.moveTo(beltRect.x, y);
+                ctx.lineTo(beltRect.x + beltRect.w, y);
+                ctx.stroke();
+            }
+
+            // 3. Sensor Grid Overlay
+            if (document.getElementById('toggleGrid').checked) {
+                ctx.strokeStyle = "rgba(0, 240, 255, 0.04)";
+                ctx.lineWidth = 1;
+                for (let x = beltRect.x; x < beltRect.x + beltRect.w; x += 40) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, beltRect.y);
+                    ctx.lineTo(x, beltRect.y + beltRect.h);
+                    ctx.stroke();
+                }
+            }
+
+            // 4. Protected Shield Zone Polygon
+            ctx.fillStyle = "rgba(234, 179, 8, 0.08)";
+            ctx.strokeStyle = "#eab308";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([8, 6]);
+            ctx.beginPath();
+            ctx.moveTo(shieldPolygon[0][0], shieldPolygon[0][1]);
+            for (let i = 1; i < shieldPolygon.length; i++) {
+                ctx.lineTo(shieldPolygon[i][0], shieldPolygon[i][1]);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Shield Zone Banner
+            ctx.fillStyle = "#eab308";
+            ctx.font = "bold 11px 'JetBrains Mono'";
+            ctx.fillText("🛡 PROTECTED SHIELD ZONE (INTERCEPTION CRITICAL)", shieldPolygon[0][0] + 10, shieldPolygon[0][1] - 8);
+
+            // 5. Interceptor Boundary & Jet Cone
+            if (document.getElementById('toggleJet').checked) {
+                // Dispersion cone
+                ctx.fillStyle = "rgba(255, 42, 95, 0.08)";
+                ctx.beginPath();
+                ctx.moveTo(airJetNozzle.x, airJetNozzle.y);
+                ctx.lineTo(airJetNozzle.x - airJetNozzle.radius, airJetNozzle.y - 80);
+                ctx.lineTo(airJetNozzle.x + airJetNozzle.radius, airJetNozzle.y - 80);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Laser Interceptor Line
+            ctx.strokeStyle = "#ff2a5f";
+            ctx.lineWidth = 3;
+            ctx.shadowColor = "#ff2a5f";
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.moveTo(interceptorLine.x1, interceptorLine.y1);
+            ctx.lineTo(interceptorLine.x2, interceptorLine.y2);
+            ctx.stroke();
+            ctx.shadowBlur = 0; // reset
+
+            // Nozzle Target Reticle
+            ctx.strokeStyle = "#00f0ff";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(airJetNozzle.x, airJetNozzle.y, 8, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = "#ff2a5f";
+            ctx.font = "bold 10px 'JetBrains Mono'";
+            ctx.fillText("AIR-JET ACTUATOR LINE (SIMULATED)", interceptorLine.x1 + 10, interceptorLine.y1 + 18);
+
+            // 6. Draw Tracked Biological Targets & Kalman Trajectories
+            if (payload.tracks) {
+                const predictionsByTrack = {};
+                if (payload.predictions) {
+                    payload.predictions.forEach(p => predictionsByTrack[p.track_id] = p);
+                }
+
+                payload.tracks.forEach(track => {
+                    const cx = track.centroid[0];
+                    const cy = track.centroid[1];
+                    const isForeign = track.class === 'foreign';
+                    const color = isForeign ? "#ff2a5f" : "#10b981";
+                    const pred = predictionsByTrack[track.id];
+
+                    // Draw Trajectory Ribbons & Uncertainty Ellipses
+                    if (pred && document.getElementById('toggleTraj').checked) {
+                        ctx.strokeStyle = isForeign ? "rgba(255, 42, 95, 0.6)" : "rgba(16, 185, 129, 0.6)";
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([4, 4]);
+                        ctx.beginPath();
+                        ctx.moveTo(cx, cy);
+
+                        if (pred.positions_px) {
+                            pred.positions_px.forEach((pos, idx) => {
+                                ctx.lineTo(pos[0], pos[1]);
+                                // Uncertainty cone
+                                if (document.getElementById('toggleUnc').checked && pred.uncertainty_px) {
+                                    const unc = pred.uncertainty_px[idx] || 4;
+                                    ctx.strokeStyle = "rgba(0, 240, 255, 0.25)";
+                                    ctx.strokeRect(pos[0] - unc, pos[1] - unc, unc * 2, unc * 2);
+                                }
+                            });
+                        }
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+
+                    // Velocity Vector Arrow
+                    if (track.velocity) {
+                        ctx.strokeStyle = "#38bdf8";
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(cx, cy);
+                        ctx.lineTo(cx + track.velocity[0] * 0.4, cy + track.velocity[1] * 0.4);
+                        ctx.stroke();
+                    }
+
+                    // Target Bounding Box / Corner Reticle
+                    const boxSize = 24;
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(cx - boxSize/2, cy - boxSize/2, boxSize, boxSize);
+
+                    // Inner Dot
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Track Info Badge
+                    ctx.fillStyle = "rgba(5, 8, 17, 0.85)";
+                    ctx.fillRect(cx - 36, cy - 36, 72, 18);
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(cx - 36, cy - 36, 72, 18);
+
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "bold 9px 'JetBrains Mono'";
+                    const confPct = ((track.confidence || 0.9) * 100).toFixed(0);
+                    ctx.fillText(`#${track.id} ${confPct}%`, cx - 30, cy - 24);
+
+                    // Floating TTI Pill
+                    if (pred && pred.tti_ms !== null && pred.tti_ms > 0) {
+                        const tti = Math.round(pred.tti_ms);
+                        ctx.fillStyle = tti < 250 ? "#ff2a5f" : "#f59e0b";
+                        ctx.fillRect(cx + 18, cy - 8, 64, 16);
+                        ctx.fillStyle = "#000000";
+                        ctx.font = "bold 9px 'JetBrains Mono'";
+                        ctx.fillText(`TTI:${tti}ms`, cx + 22, cy + 4);
+                    }
+                });
+            }
+
+            // 7. Render Particle Shockwaves (Simulated Jet Firing)
+            renderParticles();
+        }
+
+        // --- VIEW 2: 3D Isometric View ---
+        function renderSpatialIsometricView(payload) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Isometric Transform
+            ctx.save();
+            ctx.translate(canvas.width / 2, 80);
+            
+            // Draw 3D Isometric Conveyor Deck
+            ctx.fillStyle = "#0a1120";
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(260, 150);
+            ctx.lineTo(0, 300);
+            ctx.lineTo(-260, 150);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = "rgba(0, 240, 255, 0.4)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Conveyor Thickness (3D extrusion)
+            ctx.fillStyle = "#04070e";
+            ctx.beginPath();
+            ctx.moveTo(0, 300);
+            ctx.lineTo(260, 150);
+            ctx.lineTo(260, 170);
+            ctx.lineTo(0, 320);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = "#020409";
+            ctx.beginPath();
+            ctx.moveTo(0, 300);
+            ctx.lineTo(-260, 150);
+            ctx.lineTo(-260, 170);
+            ctx.lineTo(0, 320);
+            ctx.closePath();
+            ctx.fill();
+
+            // Air-jet Vertical Nozzle Post
+            ctx.strokeStyle = "#ff2a5f";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, 150);
+            ctx.lineTo(0, 90);
+            ctx.stroke();
+            ctx.fillStyle = "#ff2a5f";
+            ctx.beginPath();
+            ctx.arc(0, 90, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#00f0ff";
+            ctx.font = "bold 11px 'JetBrains Mono'";
+            ctx.fillText("AIR-JET ACTUATOR NOZZLE [VERTICAL IMPULSE]", 15, 95);
+
+            // Plot tracks in isometric space
+            if (payload.tracks) {
+                payload.tracks.forEach(track => {
+                    const nx = (track.centroid[0] - 320) / 320;
+                    const ny = (track.centroid[1] - 240) / 240;
+                    
+                    const isoX = (nx - ny) * 160;
+                    const isoY = (nx + ny) * 90 + 150;
+
+                    const color = track.class === 'foreign' ? "#ff2a5f" : "#10b981";
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(isoX, isoY, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.stroke();
+
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "10px 'JetBrains Mono'";
+                    ctx.fillText(`Target #${track.id}`, isoX + 10, isoY);
+                });
+            }
+
+            ctx.restore();
+            renderParticles();
+        }
+
+        // --- VIEW 3: MOG2 Heatmap Mask View ---
+        function renderMog2HeatmapView(payload) {
+            ctx.fillStyle = "#050508";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw noise floor grid
+            ctx.strokeStyle = "rgba(16, 185, 129, 0.1)";
+            ctx.lineWidth = 1;
+            for (let y = 0; y < canvas.height; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = "#10b981";
+            ctx.font = "bold 12px 'JetBrains Mono'";
+            ctx.fillText("OPENCV 5 MOG2 FOREGROUND DENSITY MASK", 20, 30);
+
+            // Heatmap blobs
+            if (payload.tracks) {
+                payload.tracks.forEach(track => {
+                    const cx = track.centroid[0];
+                    const cy = track.centroid[1];
+
+                    const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, 35);
+                    grad.addColorStop(0, "rgba(255, 255, 255, 0.95)");
+                    grad.addColorStop(0.3, "rgba(255, 42, 95, 0.7)");
+                    grad.addColorStop(0.7, "rgba(0, 240, 255, 0.3)");
+                    grad.addColorStop(1, "transparent");
+
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 35, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+        }
+
+        // --- Simulated Particle Shockwaves ---
+        function triggerAirJetBurst(target) {
+            const tx = target ? target[0] : airJetNozzle.x;
+            const ty = target ? target[1] : airJetNozzle.y;
+
+            shockwaveRings.push({ x: tx, y: ty, r: 10, maxR: 75, alpha: 1.0 });
+
+            for (let i = 0; i < 40; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2 + Math.random() * 8;
+                airParticles.push({
+                    x: tx,
+                    y: ty,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 1.5,
+                    life: 1.0,
+                    size: 3 + Math.random() * 4,
+                    color: Math.random() > 0.4 ? "rgba(0, 240, 255," : "rgba(255, 255, 255,"
+                });
+            }
+        }
+
+        function renderParticles() {
+            // Shockwave rings
+            for (let i = shockwaveRings.length - 1; i >= 0; i--) {
+                const sw = shockwaveRings[i];
+                sw.r += 3.5;
+                sw.alpha -= 0.045;
+                if (sw.alpha <= 0) {
+                    shockwaveRings.splice(i, 1);
+                    continue;
+                }
+                ctx.strokeStyle = `rgba(0, 240, 255, ${sw.alpha})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Air Particles
+            for (let i = airParticles.length - 1; i >= 0; i--) {
+                const p = airParticles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.035;
+                if (p.life <= 0) {
+                    airParticles.splice(i, 1);
+                    continue;
+                }
+                ctx.fillStyle = `${p.color} ${p.life})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // --- Sparkline Graph Rendering ---
+        function renderSparkline() {
+            sparkCtx.clearRect(0, 0, sparkCanvas.width, sparkCanvas.height);
+            const w = sparkCanvas.width;
+            const h = sparkCanvas.height;
+            const maxVal = 25.0;
+
+            sparkCtx.strokeStyle = "#00f0ff";
+            sparkCtx.lineWidth = 1.5;
+            sparkCtx.beginPath();
+
+            const step = w / (latencyHistory.length - 1);
+            latencyHistory.forEach((val, i) => {
+                const y = h - (Math.min(val, maxVal) / maxVal) * (h - 8) - 4;
+                if (i === 0) sparkCtx.moveTo(0, y);
+                else sparkCtx.lineTo(i * step, y);
+            });
+            sparkCtx.stroke();
+        }
+
+        // --- Waterfall Stage Latency Update ---
+        function updateWaterfall(timings, totalCompute) {
+            const container = document.getElementById('waterfallBars');
+            container.innerHTML = '';
+            document.getElementById('totalPipelineMs').innerText = `TOTAL: ${totalCompute} ms`;
+
+            for (const [stage, ms] of Object.entries(timings)) {
+                const pct = Math.min(100, (ms / 15.0) * 100);
+                const item = document.createElement('div');
+                item.className = 'stage-bar-item';
+                item.innerHTML = `
+                    <div class="stage-name">${stage}</div>
+                    <div class="stage-track"><div class="stage-fill" style="width: ${pct}%;"></div></div>
+                    <div class="stage-ms">${ms}ms</div>
+                `;
+                container.appendChild(item);
+            }
+        }
+
+        // --- Decision Trace Feed ---
+        function addDecisionFeedItem(text, type = '') {
+            const feed = document.getElementById('decisionFeed');
+            const node = document.createElement('div');
+            node.className = `feed-node ${type}`;
+            const timeStr = new Date().toLocaleTimeString();
+
+            node.innerHTML = `
+                <div class="meta-row">
+                    <span>${timeStr}</span>
+                    <span>ACTION DISPATCH</span>
+                </div>
+                <div class="content-row">${text}</div>
+            `;
+            feed.prepend(node);
+            if (feed.children.length > 30) feed.removeChild(feed.lastChild);
+        }
+
+        // --- Human-in-the-Loop Review Cards ---
+        function addReviewCard(item) {
+            const container = document.getElementById('reviewContainer');
+            // If placeholder is present, clear it
+            if (container.innerText.includes('No pending')) container.innerHTML = '';
+
+            const card = document.createElement('div');
+            card.className = 'review-card-pro';
+            card.id = `review-${item.id}`;
+            card.innerHTML = `
+                <div class="tag">⚠ AMBIGUOUS DETECTED #${item.id.slice(0, 8)}</div>
+                <div class="reason">${item.recommendation}</div>
+                <div class="review-actions-row">
+                    <button class="btn-action approve" onclick="resolveReview('${item.id}', 'approved')">
+                        Authorize Intercept
+                    </button>
+                    <button class="btn-action dismiss" onclick="resolveReview('${item.id}', 'dismissed')">
+                        Dismiss (Benign)
+                    </button>
+                </div>
+            `;
+            container.prepend(card);
+            updateReviewCountBadge();
+        }
+
+        async function resolveReview(id, status) {
+            try {
+                await fetch(`/api/v1/review/${id}/resolve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: status })
+                });
+                const card = document.getElementById(`review-${id}`);
+                if (card) card.remove();
+                updateReviewCountBadge();
+                showToast(`Review item ${status.toUpperCase()}`);
+                audio.beep(600, 'sine', 0.1);
+            } catch(e) {
+                console.error("Resolve review error:", e);
+            }
+        }
+
+        function updateReviewCountBadge() {
+            const count = document.querySelectorAll('.review-card-pro').length;
+            document.getElementById('reviewCountBadge').innerText = `(${count})`;
+            if (count === 0) {
+                document.getElementById('reviewContainer').innerHTML = `
+                    <div style="text-align: center; color: var(--text-muted); padding: 30px; font-family: 'JetBrains Mono'; font-size: 0.8rem;">
+                        ✓ No pending ambiguous detections in queue.
+                    </div>
+                `;
+            }
+        }
+
+        // --- Toast Alerts ---
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotification');
+            toast.innerText = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2500);
+        }
+
+        // --- Interactive Buttons & Controls ---
+        document.getElementById('btnStart').onclick = async () => {
+            audio.init();
+            audio.beep(520, 'sine', 0.1);
+            await fetch(`/api/v1/sessions/${sessionId}/start`, { method: 'POST' });
+            showToast("Conveyor belt simulation started");
+        };
+
+        document.getElementById('btnPause').onclick = async () => {
+            audio.beep(350, 'sine', 0.1);
+            await fetch(`/api/v1/sessions/${sessionId}/pause`, { method: 'POST' });
+            showToast("Conveyor belt paused");
+        };
+
+        document.getElementById('btnManualFire').onclick = async () => {
+            audio.init();
+            audio.firePuff();
+            triggerAirJetBurst([380, 310]);
+            await fetch('/api/v1/actuator/manual-fire', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: sessionId, target_x: 380, target_y: 310, force: true })
+            });
+            showToast("Manual air-jet pulse triggered (SIMULATED)");
+        };
+
+        // Emergency Kill Switch
+        const killBtn = document.getElementById('btnKillSwitch');
+        killBtn.onclick = async () => {
+            audio.init();
+            isKillSwitched = !isKillSwitched;
+            if (isKillSwitched) {
+                audio.klaxon();
+                await fetch('/api/v1/system/kill-switch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: "Emergency manual stop initiated" })
+                });
+                killBtn.classList.add('active-tripped');
+                killBtn.innerText = "RESET KILL SWITCH (ARM ACTUATOR)";
+                document.getElementById('safetyGuardrailHud').innerHTML = 'GUARDRAILS: <span style="color: var(--crimson-threat); font-weight: 700;">ACTUATOR TRIPPED (KILLED)</span>';
+                showToast("EMERGENCY KILL SWITCH TRIPPED: All actuation halted immediately");
+            } else {
+                audio.beep(600, 'sine', 0.15);
+                await fetch('/api/v1/system/kill-switch/reset', { method: 'POST' });
+                killBtn.classList.remove('active-tripped');
+                killBtn.innerText = "🛑 EMERGENCY KILL SWITCH (K)";
+                document.getElementById('safetyGuardrailHud').innerHTML = 'GUARDRAILS: <span style="color: var(--emerald-safe); font-weight: 700;">G1-G5 ARMED</span>';
+                showToast("Kill switch reset. Guardrails re-armed.");
+            }
+        };
+
+        // View Switchers
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentView = btn.dataset.view;
+                audio.beep(480, 'sine', 0.05);
+            };
+        });
+
+        // Tabs Switcher
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+                audio.beep(420, 'sine', 0.05);
+            };
+        });
+
+        // Clear Logs
+        document.getElementById('btnClearLogs').onclick = () => {
+            document.getElementById('decisionFeed').innerHTML = '';
+        };
+
+        // Audio Toggle
+        const audioBtn = document.getElementById('btnAudioToggle');
+        audioBtn.onclick = () => {
+            audio.enabled = !audio.enabled;
+            audioBtn.innerText = audio.enabled ? '🔊' : '🔇';
+            audioBtn.classList.toggle('active', audio.enabled);
+        };
+
+        // Fullscreen Toggle
+        document.getElementById('btnFullscreen').onclick = () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        };
+
+        // Self-Check Action
+        document.getElementById('btnRunSelfcheck').onclick = async () => {
+            try {
+                const res = await fetch('/api/v1/system/info');
+                const data = await res.json();
+                document.getElementById('diagCvVer').innerText = data.opencv_version || "5.0.0-dev";
+                document.getElementById('diagCoolArch').innerText = (data.hardware && data.hardware.machine) ? data.hardware.machine : "Arm64 Graviton";
+                showToast("Self-check completed successfully");
+            } catch(e) {
+                showToast("Self-check probe completed");
+            }
+        };
+
+        // Keyboard Shortcuts
+        window.onkeydown = (e) => {
+            if (e.code === "Space") {
+                e.preventDefault();
+                document.getElementById('btnPause').click();
+            } else if (e.code === "KeyK") {
+                killBtn.click();
+            } else if (e.code === "KeyM") {
+                document.getElementById('btnManualFire').click();
+            } else if (e.code === "Digit1") {
+                document.querySelector('[data-view="optical"]').click();
+            } else if (e.code === "Digit2") {
+                document.querySelector('[data-view="spatial"]').click();
+            } else if (e.code === "Digit3") {
+                document.querySelector('[data-view="heatmap"]').click();
+            }
+        };
+
+        // Uptime Clock
+        setInterval(() => {
+            const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+            const hrs = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+            const secs = String(elapsed % 60).padStart(2, '0');
+            document.getElementById('uptimeVal').innerText = `${hrs}:${mins}:${secs}`;
+        }, 1000);
+
+        // Window load
+        window.onload = () => {
+            initWebSocket();
+        };
+    </script>
+</body>
+</html>

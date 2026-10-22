@@ -106,3 +106,11 @@ crash.log
 reports/
 results/
 cool_proof.json
+dataset/
+runs/
+*.pt
+*.mp4
+
+# Local / personal workspace skills and guidelines
+.agents/
+AGENTS.md
