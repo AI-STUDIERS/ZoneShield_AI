@@ -142,8 +142,34 @@ def get_session(id: str):
     return sess
 
 
+@api_router.get("/videos")
+def list_test_videos():
+    """List available test video datasets."""
+    videos_dir = Path(__file__).resolve().parent.parent / "docs" / "test_videos"
+    if not videos_dir.exists():
+        return []
+    videos = []
+    for f in sorted(videos_dir.glob("*.mp4")):
+        videos.append({
+            "name": f.name,
+            "filename": f.name,
+            "size_kb": round(f.stat().st_size / 1024, 1),
+        })
+    return videos
+
+
 @api_router.post("/sessions/{id}/start")
-def start_session(id: str):
+def start_session(id: str, video_file: Optional[str] = None):
+    sid = str(id)
+    
+    # If worker is already active, handle reload if video_file requested
+    if sid in active_workers:
+        if video_file or active_workers[sid].is_paused:
+            active_workers[sid].stop()
+            del active_workers[sid]
+        elif active_workers[sid].is_running:
+            return {"status": "already_running", "session_id": sid}
+
     sess = session_repo.get(id)
     if not sess:
         try:
@@ -153,17 +179,24 @@ def start_session(id: str):
         sess = Session(
             id=sess_uuid,
             name=f"Production Session {str(id)[:8]}",
-            source=SourceType.SIMULATOR,
+            source=SourceType.FILE if video_file else SourceType.SIMULATOR,
             state=SessionState.READY,
         )
         session_repo.save(sess)
-    
-    sid = str(id)
-    if sid in active_workers and active_workers[sid].is_running:
-        return {"status": "already_running", "session_id": sid}
         
     # Create frame source
-    if sess.source == SourceType.SIMULATOR:
+    source: Any = None
+    if video_file and video_file != "simulator":
+        test_videos_dir = Path(__file__).resolve().parent.parent / "docs" / "test_videos"
+        vpath = test_videos_dir / video_file
+        if not vpath.exists():
+            vpath = Path(video_file)
+        if vpath.exists():
+            source = VideoFile(str(vpath), loop=True)
+            sess.source = SourceType.FILE
+            session_repo.save(sess)
+
+    if source is None:
         source = SimulatorLive(
             width=640,
             height=480,
@@ -171,8 +204,8 @@ def start_session(id: str):
             seed=42,
             scenario={"speed": 1.0, "foreign_count": 3, "legit_count": 3},
         )
-    else:
-        source = SimulatorLive(width=640, height=480, fps=30, seed=101)
+        sess.source = SourceType.SIMULATOR
+        session_repo.save(sess)
 
     worker = SessionWorker(
         session_id=sid,
@@ -193,7 +226,8 @@ def start_session(id: str):
     
     sess.state = SessionState.RUNNING
     session_repo.save(sess)
-    return {"status": "started", "session_id": sid}
+    return {"status": "started", "session_id": sid, "source": sess.source.value}
+
 
 
 @api_router.post("/sessions/{id}/pause")

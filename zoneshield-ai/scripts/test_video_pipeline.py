@@ -245,17 +245,14 @@ def run_video_test(video_path: str | Path, video_name: str) -> dict[str, Any]:
 
 def main() -> None:
     test_dir = Path("docs/test_videos")
-    videos = [
-        ("conveyor_nominal_test.mp4", "Nominal Test (Clear Workpieces & Contaminants)"),
-        ("conveyor_ambiguous_debris.mp4", "Ambiguous Debris (High Speed & Irregular Dynamics)"),
-    ]
+    all_videos = sorted(test_dir.glob("*.mp4"))
+    if not all_videos:
+        print(f"Error: No videos found in {test_dir}!")
+        return
 
     all_results = {}
-    for filename, desc in videos:
-        vpath = test_dir / filename
-        if not vpath.exists():
-            print(f"Error: {vpath} not found!")
-            continue
+    for vpath in all_videos:
+        filename = vpath.name
         all_results[filename] = run_video_test(vpath, filename)
 
     out_json = Path("reports/test_videos_evaluation.json")

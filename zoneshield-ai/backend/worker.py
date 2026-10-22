@@ -15,6 +15,7 @@ Coordinates:
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import logging
 import threading
@@ -385,6 +386,7 @@ class SessionWorker:
             # Encode frame to JPEG for streaming (1 in 2 frames for network efficiency)
             if self.seq % 2 == 0:
                 _, jpeg_bytes = cv2.imencode(".jpg", image, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                b64_str = base64.b64encode(jpeg_bytes.tobytes()).decode("ascii")
                 self._broadcast_sync({
                     "type": "frame",
                     "session_id": self.session_id,
@@ -395,7 +397,7 @@ class SessionWorker:
                         "predictions": predictions,
                         "decisions": decisions_this_frame,
                         "metrics": metrics,
-                        "jpeg_b64": jpeg_bytes.tobytes().hex(),
+                        "jpeg_b64": b64_str,
                     },
                 })
 

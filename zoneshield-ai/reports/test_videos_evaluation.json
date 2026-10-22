@@ -2,11 +2,11 @@
   "conveyor_nominal_test.mp4": {
     "video": "conveyor_nominal_test.mp4",
     "frames_processed": 150,
-    "wall_time_s": 0.95,
-    "pipeline_fps": 157.9,
-    "mean_latency_ms": 5.93,
-    "p50_latency_ms": 2.06,
-    "p95_latency_ms": 3.03,
+    "wall_time_s": 1.386,
+    "pipeline_fps": 108.2,
+    "mean_latency_ms": 8.61,
+    "p50_latency_ms": 2.68,
+    "p95_latency_ms": 3.87,
     "total_detections": 191,
     "unique_tracks": 5,
     "track_ids": [
@@ -25,15 +25,15 @@
     },
     "track_max_conf": {
       "0": 0.95,
-      "1": 0.97,
+      "1": 0.98,
       "2": 1.0,
       "3": 1.0,
       "4": 1.0
     },
     "decisions_summary": {
       "intercept": 0,
-      "monitor": 145,
-      "gather_evidence": 73,
+      "monitor": 135,
+      "gather_evidence": 83,
       "request_human": 0
     },
     "intercepted_tracks": [],
@@ -48,24 +48,24 @@
     },
     "per_stage_latency_ms": {
       "UndistortHomography": 0.0,
-      "ROIDownscale": 0.11,
-      "BackgroundSubtract": 1.16,
-      "Morphology": 0.14,
+      "ROIDownscale": 0.14,
+      "BackgroundSubtract": 1.39,
+      "Morphology": 0.22,
       "Contours": 0.08,
-      "Classify": 0.36,
-      "Tracker": 3.99,
+      "Classify": 0.63,
+      "Tracker": 6.03,
       "Predictor": 0.01,
-      "DecisionEngine": 0.06
+      "DecisionEngine": 0.08
     }
   },
   "conveyor_ambiguous_debris.mp4": {
     "video": "conveyor_ambiguous_debris.mp4",
     "frames_processed": 150,
-    "wall_time_s": 0.253,
-    "pipeline_fps": 593.5,
-    "mean_latency_ms": 1.36,
-    "p50_latency_ms": 1.19,
-    "p95_latency_ms": 2.04,
+    "wall_time_s": 0.312,
+    "pipeline_fps": 480.6,
+    "mean_latency_ms": 1.73,
+    "p50_latency_ms": 1.71,
+    "p95_latency_ms": 1.77,
     "total_detections": 1,
     "unique_tracks": 1,
     "track_ids": [
@@ -95,12 +95,12 @@
     },
     "per_stage_latency_ms": {
       "UndistortHomography": 0.0,
-      "ROIDownscale": 0.1,
-      "BackgroundSubtract": 1.04,
-      "Morphology": 0.13,
+      "ROIDownscale": 0.13,
+      "BackgroundSubtract": 1.3,
+      "Morphology": 0.2,
       "Contours": 0.05,
-      "Classify": 0.02,
-      "Tracker": 0.01,
+      "Classify": 0.01,
+      "Tracker": 0.02,
       "Predictor": 0.0,
       "DecisionEngine": 0.0
     }

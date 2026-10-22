@@ -1007,8 +1007,13 @@
             <!-- TACTICAL CONTROL DECK -->
             <div class="control-deck">
                 <div class="control-group">
-                    <button id="btnStart" class="btn-deck primary">▶ START BELT</button>
+                    <button id="btnStart" class="btn-deck primary">▶ START</button>
                     <button id="btnPause" class="btn-deck">⏸ PAUSE</button>
+                    <select id="selectSource" class="btn-deck" style="padding: 7px 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; background: var(--bg-surface); border: 1px solid var(--border-bright); color: var(--cyan-glow); cursor: pointer;">
+                        <option value="simulator">🎮 Digital Twin Simulator</option>
+                        <option value="conveyor_nominal_test.mp4">📹 Video: Nominal Belt</option>
+                        <option value="conveyor_ambiguous_debris.mp4">📹 Video: Ambiguous Debris</option>
+                    </select>
                     <button id="btnManualFire" class="btn-deck amber">🎯 MANUAL FIRE (M)</button>
                 </div>
 
@@ -1217,6 +1222,7 @@
         let isKillSwitched = false;
         let totalIntercepts = 0;
         let currentView = "optical"; // 'optical', 'spatial', 'heatmap'
+        let lastVideoFrameImg = null;
 
         // Latency buffer for sparkline
         const latencyHistory = new Array(60).fill(12.4);
@@ -1278,6 +1284,13 @@
         // --- Frame Processing & Canvas Rendering ---
         function processFramePayload(payload) {
             // Update metrics
+            if (payload.jpeg_b64) {
+                if (!lastVideoFrameImg) {
+                    lastVideoFrameImg = new Image();
+                }
+                lastVideoFrameImg.src = "data:image/jpeg;base64," + payload.jpeg_b64;
+            }
+
             if (payload.metrics) {
                 const fps = payload.metrics.fps || 30.0;
                 const compute = payload.metrics.compute_ms || 12.0;
@@ -1321,9 +1334,13 @@
         function renderOpticalRadarView(payload) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Conveyor Deck Background
-            ctx.fillStyle = "#0c1322";
-            ctx.fillRect(beltRect.x, beltRect.y, beltRect.w, beltRect.h);
+            // 1. Conveyor Deck Background / Live Video Frame
+            if (lastVideoFrameImg && lastVideoFrameImg.complete && lastVideoFrameImg.naturalWidth > 0) {
+                ctx.drawImage(lastVideoFrameImg, beltRect.x, beltRect.y, beltRect.w, beltRect.h);
+            } else {
+                ctx.fillStyle = "#0c1322";
+                ctx.fillRect(beltRect.x, beltRect.y, beltRect.w, beltRect.h);
+            }
 
             // Steel Guide Rails
             ctx.fillStyle = "#1e293b";
@@ -1791,11 +1808,20 @@
         }
 
         // --- Interactive Buttons & Controls ---
+        document.getElementById('selectSource').onchange = async (e) => {
+            const val = e.target.value;
+            audio.beep(480, 'sine', 0.1);
+            showToast(`Loading source: ${val}`);
+            lastVideoFrameImg = null;
+            await fetch(`/api/v1/sessions/${sessionId}/start?video_file=${encodeURIComponent(val)}`, { method: 'POST' });
+        };
+
         document.getElementById('btnStart').onclick = async () => {
             audio.init();
             audio.beep(520, 'sine', 0.1);
-            await fetch(`/api/v1/sessions/${sessionId}/start`, { method: 'POST' });
-            showToast("Conveyor belt simulation started");
+            const val = document.getElementById('selectSource').value;
+            await fetch(`/api/v1/sessions/${sessionId}/start?video_file=${encodeURIComponent(val)}`, { method: 'POST' });
+            showToast(`Conveyor started: ${val}`);
         };
 
         document.getElementById('btnPause').onclick = async () => {
@@ -1925,9 +1951,30 @@
             document.getElementById('uptimeVal').innerText = `${hrs}:${mins}:${secs}`;
         }, 1000);
 
+        // Dynamic Video List Loader
+        async function loadVideoList() {
+            try {
+                const res = await fetch('/api/v1/videos');
+                if (res.ok) {
+                    const videos = await res.json();
+                    if (videos && videos.length > 0) {
+                        const sel = document.getElementById('selectSource');
+                        sel.innerHTML = '<option value="simulator">🎮 Digital Twin Simulator</option>';
+                        videos.forEach((v, idx) => {
+                            const opt = document.createElement('option');
+                            opt.value = v.filename;
+                            opt.innerText = `📹 Video ${idx + 1}: ${v.name} (${v.size_kb} KB)`;
+                            sel.appendChild(opt);
+                        });
+                    }
+                }
+            } catch(e) {}
+        }
+
         // Window load
         window.onload = () => {
             initWebSocket();
+            loadVideoList();
         };
     </script>
 </body>
